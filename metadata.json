@@ -1,0 +1,6 @@
+{
+  "name": "PyAdvance - Advanced Python & OOP Interactive Academy",
+  "description": "Futuristic interactive platform for mastering Advanced Python, OOP, C3 MRO, Streams, Regex, and Design Patterns with real-time code execution and Surge.sh deployment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
