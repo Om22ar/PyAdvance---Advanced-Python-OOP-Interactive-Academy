@@ -109,19 +109,32 @@ import { LearningStateService } from '../../services/learning-state.service';
 
       <!-- Bottom Profile Bar -->
       <div class="p-4 border-t border-slate-800/80 bg-[#0A151A] flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center ring-2 ring-amber-400/30">
-            OD
-          </div>
-          <div>
-            <div class="text-xs font-semibold text-white">Omar D.</div>
+        <div class="flex items-center gap-3 min-w-0">
+          @if (state.userPhotoUrl(); as photo) {
+            <img
+              [src]="photo"
+              alt="User avatar"
+              referrerpolicy="no-referrer"
+              class="w-9 h-9 rounded-full object-cover ring-2 ring-teal-500/40 shrink-0" />
+          } @else {
+            <div class="w-9 h-9 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center ring-2 ring-amber-400/30 shrink-0">
+              {{ state.userDisplayName().slice(0, 2).toUpperCase() }}
+            </div>
+          }
+          <div class="min-w-0">
+            <div class="text-xs font-semibold text-white truncate flex items-center gap-1">
+              <span>{{ state.userDisplayName() }}</span>
+              @if (state.isCloudSyncActive()) {
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="Cloud Sync Active"></span>
+              }
+            </div>
             <div class="text-[11px] text-slate-400 flex items-center gap-1">
               <span class="text-amber-400 font-bold">&#9733;</span>
-              <span>{{ state.dayStreak() }} day learning streak</span>
+              <span>{{ state.dayStreak() }} day streak</span>
             </div>
           </div>
         </div>
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 shrink-0">
           <button
             type="button"
             (click)="state.openSettings()"

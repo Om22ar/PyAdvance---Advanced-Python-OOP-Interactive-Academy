@@ -12,16 +12,37 @@ import { ActivityItem } from '../../models/curriculum.model';
   template: `
     <div class="space-y-8 max-w-7xl mx-auto">
       <!-- Greeting Header -->
-      <div>
-        <div class="text-[12px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-1">
-          STUDY SPRINT &middot; SEMESTER ADVANCED OOP
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="text-[12px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-1 flex items-center gap-2">
+            <span>STUDY SPRINT &middot; SEMESTER ADVANCED OOP</span>
+            @if (state.isCloudSyncActive()) {
+              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                <mat-icon class="text-xs">cloud_done</mat-icon>
+                <span>Synced with Google</span>
+              </span>
+            }
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Good morning, {{ state.userDisplayName() }}.
+          </h1>
+          <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1">
+            Keep the loop tight: write a little, run it, then look closer.
+          </p>
         </div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          Good morning, Omar.
-        </h1>
-        <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1">
-          Keep the loop tight: write a little, run it, then look closer.
-        </p>
+
+        <!-- Overall Syllabus Progress Pill -->
+        <div class="p-3 px-4 rounded-2xl bg-white dark:bg-[#11232B] border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-sm">
+            {{ state.overallProgress() }}%
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Syllabus Progress</div>
+            <div class="text-[11px] text-slate-400">
+              {{ state.totalCompletedStepsCount() }} of {{ state.totalStepsCount() }} curriculum steps completed
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Top Row: Continue Card & This Week Stats -->

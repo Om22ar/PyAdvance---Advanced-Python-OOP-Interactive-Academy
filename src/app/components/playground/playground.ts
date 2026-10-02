@@ -19,10 +19,10 @@ import { PythonRunnerService, ExecutionResult } from '../../services/python-runn
             <span>INTERACTIVE PYTHON OOP LAB</span>
           </div>
           <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {{ activeLesson()?.title || 'Interactive Code Playground' }}
+            {{ activeLesson().title }}
           </h1>
           <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {{ activeLesson()?.summary || 'Run Python code with in-browser execution.' }}
+            {{ activeLesson().summary }}
           </p>
         </div>
 
@@ -172,7 +172,7 @@ import { PythonRunnerService, ExecutionResult } from '../../services/python-runn
           </div>
 
           <!-- Interactive Lesson Quiz Card -->
-          @if (activeLesson()?.quiz; as q) {
+          @if (activeLesson().quiz; as q) {
             <div class="bg-white dark:bg-[#11232B] rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-3">
               <div class="flex items-center justify-between">
                 <div class="text-[11px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">

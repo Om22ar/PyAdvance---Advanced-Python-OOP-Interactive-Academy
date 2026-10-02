@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with learning streak and goals",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "streak": { "type": "number" },
+        "practiceTimeHours": { "type": "number" },
+        "targetWeeklyHours": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "email"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Progress tracking for each Python module and curriculum step",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "moduleId": { "type": "string", "maxLength": 128 },
+        "completedLessonIds": { "type": "array" },
+        "progressPercent": { "type": "number" },
+        "status": { "type": "string", "enum": ["in_progress", "completed", "next_up"] },
+        "completedLessons": { "type": "number" },
+        "totalLessons": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "moduleId", "progressPercent"]
+    },
+    "UserActivity": {
+      "title": "UserActivity",
+      "description": "Recent study activities and milestones",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "type": { "type": "string", "enum": ["completed", "run", "earned", "saved"] },
+        "icon": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile with streak, learning stats, and authentication metadata"
+    },
+    "/users/{userId}/progress/{moduleId}": {
+      "schema": "UserProgress",
+      "description": "User completion status and completed lesson steps per Python module"
+    },
+    "/users/{userId}/activities/{activityId}": {
+      "schema": "UserActivity",
+      "description": "User activity log entries"
+    }
+  }
+}
