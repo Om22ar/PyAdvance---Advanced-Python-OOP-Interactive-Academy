@@ -1,9 +1,27 @@
-import { ChangeDetectionStrategy, Component, inject, signal, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LearningStateService } from '../../services/learning-state.service';
 import { PythonRunnerService, ExecutionResult } from '../../services/python-runner.service';
+
+export interface ParsedPythonError {
+  type: string;
+  message: string;
+  line: number | null;
+  codeSnippet: string | null;
+  explanation: string;
+  remediation: string;
+  rawTraceback: string;
+}
+
+export interface TerminalEntry {
+  type: 'cmd' | 'stdout' | 'stderr' | 'system' | 'repl';
+  text: string;
+  timestamp: string;
+  isError?: boolean;
+  highlightedHtml?: string;
+}
 
 @Component({
   selector: 'app-playground',
@@ -49,136 +67,88 @@ import { PythonRunnerService, ExecutionResult } from '../../services/python-runn
 
       <!-- Main Editor & Terminal Split Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <!-- Editor Column (7 cols) -->
-        <div class="lg:col-span-7 bg-[#0b1419] rounded-2xl border border-slate-800 shadow-md flex flex-col overflow-hidden">
-          <!-- Editor Toolbar -->
-          <div class="px-4 py-3 bg-[#080e12] border-b border-slate-800/80 flex items-center justify-between text-xs">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
-              <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
-              <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
-              <span class="font-mono text-slate-400 font-medium ml-2 text-[11px]">main.py</span>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <!-- Engine indicator -->
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-400 border border-teal-500/30">
-                {{ runner.isWasmReady() ? 'CPython 3.12 WASM' : 'Instant Sandbox' }}
-              </span>
-
-              <button
-                (click)="resetCode()"
-                title="Reset code"
-                class="px-2.5 py-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition-colors text-xs flex items-center gap-1">
-                <mat-icon class="text-sm">refresh</mat-icon>
-                <span class="hidden sm:inline">Reset</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Code Textarea -->
-          <div class="relative flex-1 min-h-[360px] p-4 font-mono leading-relaxed text-emerald-300 bg-[#0b1419]">
-            <textarea
-              [(ngModel)]="currentCode"
-              spellcheck="false"
-              [style.font-size.px]="state.editorFontSize()"
-              class="w-full h-full min-h-[340px] bg-transparent text-slate-100 font-mono focus:outline-none resize-none leading-relaxed selection:bg-teal-500/30"
-              placeholder="# Write your Python code here..."></textarea>
-          </div>
-
-          <!-- Editor Actions Bar -->
-          <div class="p-3 bg-[#080e12] border-t border-slate-800/80 flex items-center justify-between">
-            <div class="flex items-center gap-2 text-xs text-slate-400">
-              <mat-icon class="text-base text-teal-400">tips_and_updates</mat-icon>
-              <span class="hidden sm:inline">Tip: Press Run or modify variables freely</span>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button
-                (click)="copyCode()"
-                class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1 transition-all">
-                <mat-icon class="text-sm">content_copy</mat-icon>
-                <span>{{ hasCopied() ? 'Copied!' : 'Copy' }}</span>
-              </button>
-
-              <button
-                (click)="executeCode()"
-                [disabled]="isRunning()"
-                class="px-5 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-teal-500/20 active:scale-95">
-                <mat-icon class="text-base leading-none">{{ isRunning() ? 'hourglass_top' : 'play_arrow' }}</mat-icon>
-                <span>{{ isRunning() ? 'Running...' : 'Run Code' }}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Terminal & Output Column (5 cols) -->
-        <div class="lg:col-span-5 flex flex-col gap-6">
-          <!-- Terminal Output Card -->
+        <!-- Editor Column (7 cols or 6 cols depending on expanded state) -->
+        <div [class]="isTerminalMaximized() ? 'lg:col-span-5' : 'lg:col-span-6 xl:col-span-6'" class="flex flex-col gap-6">
+          <!-- Python Code Editor Card -->
           <div class="bg-[#0b1419] rounded-2xl border border-slate-800 shadow-md flex flex-col flex-1 overflow-hidden">
+            <!-- Editor Toolbar -->
             <div class="px-4 py-3 bg-[#080e12] border-b border-slate-800/80 flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2 text-slate-300 font-semibold font-mono">
-                <mat-icon class="text-sm text-teal-400">keyboard_arrow_right</mat-icon>
-                <span>Console Output</span>
-              </div>
-              @if (executionResult()) {
-                <span class="text-[11px] font-mono text-slate-400 tabular-nums">
-                  {{ executionResult()?.durationMs }}ms
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+                <span class="font-mono text-slate-300 font-semibold ml-2 text-[12px] flex items-center gap-1.5">
+                  <mat-icon class="text-sm text-teal-400">code</mat-icon>
+                  <span>main.py</span>
                 </span>
-              }
-            </div>
-
-            <div class="p-4 flex-1 font-mono text-xs sm:text-sm overflow-y-auto min-h-[220px] max-h-[300px] space-y-2">
-              @if (isRunning()) {
-                <div class="flex items-center gap-2 text-teal-400 py-4">
-                  <span class="animate-spin text-base font-bold">&cir;</span>
-                  <span>Executing Python runtime...</span>
-                </div>
-              } @else if (executionResult()) {
-                @if (executionResult()?.stdout) {
-                  <pre class="text-emerald-400 whitespace-pre-wrap leading-relaxed">{{ executionResult()?.stdout }}</pre>
-                }
-                @if (executionResult()?.stderr) {
-                  <pre class="text-rose-400 whitespace-pre-wrap leading-relaxed">{{ executionResult()?.stderr }}</pre>
-                }
-              } @else {
-                <div class="text-slate-500 italic py-6 text-center">
-                  Press "Run Code" to view stdout execution trace.
-                </div>
-              }
-            </div>
-
-            <!-- Virtual File System Drawer -->
-            <div class="p-3 bg-[#080e12] border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-              <span class="font-mono text-[11px]">Virtual Files: sample.txt, config.txt, user.json</span>
-              <button
-                (click)="toggleVfsView()"
-                class="text-teal-400 hover:underline text-[11px] font-medium">
-                {{ showVfs() ? 'Hide Files' : 'Inspect Files' }}
-              </button>
-            </div>
-
-            @if (showVfs()) {
-              <div class="p-3 bg-[#0d181e] border-t border-slate-800 text-xs font-mono text-slate-300 space-y-1.5 animate-in fade-in">
-                <div class="text-teal-400 text-[11px] font-bold">VFS STORAGE:</div>
-                @for (file of runner.getVirtualFilesList(); track file.name) {
-                  <div class="flex items-center justify-between text-[11px] text-slate-400 py-0.5">
-                    <span>{{ file.name }}</span>
-                    <span>{{ file.size }} bytes</span>
-                  </div>
-                }
               </div>
-            }
+
+              <div class="flex items-center gap-2">
+                <!-- Engine indicator -->
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-400 border border-teal-500/30">
+                  {{ runner.isWasmReady() ? 'CPython 3.12 (WASM)' : 'Native Sandbox' }}
+                </span>
+
+                <button
+                  type="button"
+                  (click)="resetCode()"
+                  title="Reset code snippet to default"
+                  class="px-2.5 py-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors text-xs flex items-center gap-1">
+                  <mat-icon class="text-sm">refresh</mat-icon>
+                  <span class="hidden sm:inline">Reset</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Code Textarea with Ctrl+Enter binding -->
+            <div class="relative flex-1 min-h-[380px] p-4 font-mono leading-relaxed bg-[#0b1419]">
+              <textarea
+                [(ngModel)]="currentCode"
+                (keydown.control.enter)="executeCode()"
+                (keydown.meta.enter)="executeCode()"
+                spellcheck="false"
+                [style.font-size.px]="state.editorFontSize()"
+                class="w-full h-full min-h-[360px] bg-transparent text-slate-100 font-mono focus:outline-none resize-none leading-relaxed selection:bg-teal-500/30 font-medium"
+                placeholder="# Write your Python code here..."></textarea>
+            </div>
+
+            <!-- Editor Actions Bar -->
+            <div class="p-3 bg-[#080e12] border-t border-slate-800/80 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-xs text-slate-400">
+                <mat-icon class="text-base text-teal-400">keyboard</mat-icon>
+                <span class="hidden sm:inline">Press <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-teal-300 font-mono text-[10px]">Ctrl+Enter</kbd> to run</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="copyCode()"
+                  class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1 transition-all">
+                  <mat-icon class="text-sm">content_copy</mat-icon>
+                  <span>{{ hasCopied() ? 'Copied!' : 'Copy Code' }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="executeCode()"
+                  [disabled]="isRunning()"
+                  class="px-5 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-teal-500/20 active:scale-95">
+                  <mat-icon class="text-base leading-none">{{ isRunning() ? 'hourglass_top' : 'play_arrow' }}</mat-icon>
+                  <span>{{ isRunning() ? 'Executing...' : 'Run Code' }}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Interactive Lesson Quiz Card -->
           @if (activeLesson().quiz; as q) {
             <div class="bg-white dark:bg-[#11232B] rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-3">
               <div class="flex items-center justify-between">
-                <div class="text-[11px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
-                  QUICK CHECK
+                <div class="text-[11px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <mat-icon class="text-sm">quiz</mat-icon>
+                  <span>CONCEPT CHECK</span>
                 </div>
-                <span class="text-xs font-semibold text-slate-500">1 question</span>
+                <span class="text-xs font-semibold text-slate-400">1 question</span>
               </div>
 
               <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
@@ -188,6 +158,7 @@ import { PythonRunnerService, ExecutionResult } from '../../services/python-runn
               <div class="space-y-1.5 pt-1">
                 @for (opt of q.options; track opt; let idx = $index) {
                   <button
+                    type="button"
                     (click)="submitQuiz(idx)"
                     [class]="selectedQuizAnswer() === idx
                       ? (idx === q.answerIndex
@@ -205,12 +176,422 @@ import { PythonRunnerService, ExecutionResult } from '../../services/python-runn
                   [class]="isQuizCorrect()
                     ? 'p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-300'
                     : 'p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-xs text-rose-800 dark:text-rose-300'">
-                  <div class="font-bold mb-0.5">{{ isQuizCorrect() ? 'Correct!' : 'Incorrect' }}</div>
+                  <div class="font-bold mb-0.5 flex items-center gap-1.5">
+                    <mat-icon class="text-sm leading-none">{{ isQuizCorrect() ? 'check_circle' : 'cancel' }}</mat-icon>
+                    <span>{{ isQuizCorrect() ? 'Correct!' : 'Incorrect' }}</span>
+                  </div>
                   <p class="leading-relaxed">{{ q.explanation }}</p>
                 </div>
               }
             </div>
           }
+        </div>
+
+        <!-- Dedicated Terminal & Output Column -->
+        <div [class]="isTerminalMaximized() ? 'lg:col-span-7' : 'lg:col-span-6 xl:col-span-6'" class="flex flex-col gap-4">
+          <!-- Terminal Window Container -->
+          <div class="bg-[#05080A] rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col flex-1 overflow-hidden transition-all duration-200">
+            <!-- Dedicated Terminal Header Bar -->
+            <div class="px-4 py-2.5 bg-[#0A1014] border-b border-slate-800/90 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <!-- Terminal Window Controls & Session Title -->
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+                </div>
+                <div class="font-mono text-slate-300 font-semibold text-xs flex items-center gap-1.5">
+                  <mat-icon class="text-sm text-teal-400">terminal</mat-icon>
+                  <span>bash - python3 main.py</span>
+                </div>
+              </div>
+
+              <!-- Terminal Status Badges -->
+              <div class="flex items-center gap-2">
+                @if (isRunning()) {
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-950/80 text-amber-400 border border-amber-500/30 animate-pulse">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>RUNNING</span>
+                  </span>
+                } @else if (executionResult(); as res) {
+                  @if (res.success) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">
+                      <mat-icon class="text-xs leading-none">check_circle</mat-icon>
+                      <span>Exit 0</span>
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-950/80 text-rose-400 border border-rose-500/30 animate-pulse">
+                      <mat-icon class="text-xs leading-none">error</mat-icon>
+                      <span>Exit 1</span>
+                    </span>
+                  }
+
+                  <span class="text-[11px] font-mono text-slate-400 tabular-nums">
+                    {{ res.durationMs }}ms
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Terminal Tabs & Controls Strip -->
+            <div class="px-3 py-1.5 bg-[#070C0F] border-b border-slate-800/80 flex items-center justify-between gap-2 overflow-x-auto text-xs">
+              <!-- View Tabs -->
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  (click)="activeTerminalTab.set('terminal')"
+                  [class]="activeTerminalTab() === 'terminal'
+                    ? 'px-3 py-1 rounded-lg bg-teal-500/20 text-teal-300 font-semibold border border-teal-500/40 text-xs flex items-center gap-1.5'
+                    : 'px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 text-xs flex items-center gap-1.5'">
+                  <mat-icon class="text-xs">wysiwyg</mat-icon>
+                  <span>Terminal</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="activeTerminalTab.set('diagnostics')"
+                  [class]="activeTerminalTab() === 'diagnostics'
+                    ? 'px-3 py-1 rounded-lg bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/40 text-xs flex items-center gap-1.5'
+                    : 'px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 text-xs flex items-center gap-1.5'">
+                  <mat-icon class="text-xs">bug_report</mat-icon>
+                  <span>Diagnostics</span>
+                  @if (parsedError()) {
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  (click)="activeTerminalTab.set('raw')"
+                  [class]="activeTerminalTab() === 'raw'
+                    ? 'px-3 py-1 rounded-lg bg-slate-800 text-slate-200 font-semibold text-xs flex items-center gap-1.5'
+                    : 'px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 text-xs flex items-center gap-1.5'">
+                  <mat-icon class="text-xs">notes</mat-icon>
+                  <span>Raw Text</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="activeTerminalTab.set('vfs')"
+                  [class]="activeTerminalTab() === 'vfs'
+                    ? 'px-3 py-1 rounded-lg bg-slate-800 text-teal-300 font-semibold text-xs flex items-center gap-1.5'
+                    : 'px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 text-xs flex items-center gap-1.5'">
+                  <mat-icon class="text-xs">folder</mat-icon>
+                  <span>VFS Files</span>
+                </button>
+              </div>
+
+              <!-- Terminal Action Buttons -->
+              <div class="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  (click)="toggleLineNumbers()"
+                  [title]="showLineNumbers() ? 'Hide line numbers' : 'Show line numbers'"
+                  [class]="showLineNumbers() ? 'text-teal-400' : 'text-slate-500'"
+                  class="p-1 rounded hover:bg-slate-800 text-xs transition-colors">
+                  <mat-icon class="text-base leading-none">format_list_numbered</mat-icon>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="toggleWrap()"
+                  [title]="wrapOutput() ? 'Disable word wrap' : 'Enable word wrap'"
+                  [class]="wrapOutput() ? 'text-teal-400' : 'text-slate-500'"
+                  class="p-1 rounded hover:bg-slate-800 text-xs transition-colors">
+                  <mat-icon class="text-base leading-none">wrap_text</mat-icon>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="copyTerminalOutput()"
+                  title="Copy terminal output"
+                  class="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition-colors text-xs">
+                  <mat-icon class="text-base leading-none">{{ hasCopiedTerminal() ? 'check' : 'content_copy' }}</mat-icon>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="clearTerminal()"
+                  title="Clear terminal screen"
+                  class="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors text-xs">
+                  <mat-icon class="text-base leading-none">delete_sweep</mat-icon>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="toggleMaximize()"
+                  [title]="isTerminalMaximized() ? 'Shrink terminal' : 'Expand terminal'"
+                  class="p-1 text-slate-400 hover:text-teal-400 hover:bg-slate-800 rounded transition-colors text-xs">
+                  <mat-icon class="text-base leading-none">{{ isTerminalMaximized() ? 'unfold_less' : 'unfold_more' }}</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tab 1: Dedicated Syntax-Highlighted Terminal View -->
+            @if (activeTerminalTab() === 'terminal') {
+              <div
+                [class]="isTerminalMaximized() ? 'min-h-[500px] max-h-[640px]' : 'min-h-[340px] max-h-[460px]'"
+                class="p-4 font-mono text-xs overflow-y-auto space-y-2 selection:bg-teal-500/30 transition-all">
+                
+                <!-- Welcome Banner when idle and no output yet -->
+                @if (!isRunning() && !executionResult() && terminalHistory().length === 0) {
+                  <div class="py-4 text-slate-500 space-y-1.5 font-mono text-xs">
+                    <div class="text-teal-400 font-bold">Python 3.12.0 (PyAdvance Cloud Interactive Engine)</div>
+                    <div>Type your code in <span class="text-slate-300">main.py</span> and click <span class="text-emerald-400 font-semibold">[Run Code]</span> or press <kbd class="px-1 py-0.5 rounded bg-slate-800 text-teal-300 text-[10px]">Ctrl+Enter</kbd>.</div>
+                    <div class="text-slate-400 pt-1 text-[11px]">Supports full Python OOP, C3 MRO linearizations, seek/tell byte streams, and syntax-highlighted error diagnostics.</div>
+                  </div>
+                }
+
+                <!-- Shell Execution Command Prompt -->
+                @if (executionResult() || isRunning() || terminalHistory().length > 0) {
+                  <div class="flex items-center gap-2 text-slate-400 text-[11px] pb-1 border-b border-slate-800/60">
+                    <span class="text-emerald-400 font-semibold">pyadvance@developer</span>
+                    <span class="text-slate-600">:</span>
+                    <span class="text-teal-400">~/workspace</span>
+                    <span class="text-slate-300 font-bold">$</span>
+                    <span class="text-slate-100 font-semibold">python3 -u main.py</span>
+                  </div>
+                }
+
+                <!-- Running Spinner -->
+                @if (isRunning()) {
+                  <div class="flex items-center gap-2 text-teal-400 py-3">
+                    <span class="animate-spin text-base font-bold">&cir;</span>
+                    <span class="font-medium">Executing code on Python runtime...</span>
+                  </div>
+                }
+
+                <!-- Terminal History Entries (From Previous Runs or REPL) -->
+                @for (entry of terminalHistory(); track $index) {
+                  <div class="space-y-1">
+                    @if (entry.type === 'cmd') {
+                      <div class="flex items-center gap-2 text-slate-400 text-[11px] pt-1">
+                        <span class="text-teal-400">>>></span>
+                        <span class="text-slate-200 font-semibold">{{ entry.text }}</span>
+                      </div>
+                    } @else if (entry.type === 'repl') {
+                      <div [class]="entry.isError ? 'text-rose-400' : 'text-cyan-300'" class="pl-4 whitespace-pre-wrap font-medium">
+                        {{ entry.text }}
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Formatted Stdout with Syntax Highlighting -->
+                @if (executionResult()?.stdout) {
+                  <div class="space-y-0.5 pt-1">
+                    @for (line of getStdoutLines(); track $index) {
+                      <div class="flex items-start gap-2.5 font-mono leading-relaxed group">
+                        @if (showLineNumbers()) {
+                          <span class="select-none text-slate-600 text-[10px] w-6 text-right tabular-nums pt-0.5">
+                            {{ $index + 1 }}
+                          </span>
+                        }
+                        <div
+                          [class.whitespace-pre-wrap]="wrapOutput()"
+                          [class.whitespace-pre]="!wrapOutput()"
+                          class="flex-1 text-slate-100"
+                          [innerHTML]="highlightOutputLine(line)"></div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Dedicated Highlighted Error Block & Traceback if Stderr is present -->
+                @if (executionResult()?.stderr; as errText) {
+                  <div class="mt-3 p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/40 space-y-2.5 animate-in fade-in">
+                    <!-- Error Header Banner -->
+                    <div class="flex items-center justify-between pb-1 border-b border-rose-800/40 text-xs">
+                      <div class="flex items-center gap-1.5 text-rose-400 font-bold">
+                        <mat-icon class="text-base text-rose-400">warning</mat-icon>
+                        <span>{{ parsedError()?.type || 'Python Execution Error' }}</span>
+                      </div>
+                      <button
+                        type="button"
+                        (click)="activeTerminalTab.set('diagnostics')"
+                        class="text-[11px] text-teal-400 hover:text-teal-300 font-semibold underline flex items-center gap-0.5">
+                        <span>View Diagnostic Guide</span>
+                        <mat-icon class="text-xs">arrow_forward</mat-icon>
+                      </button>
+                    </div>
+
+                    <!-- Highlighted Traceback Lines -->
+                    <div class="font-mono text-xs space-y-1">
+                      @for (tLine of getStderrLines(); track $index) {
+                        <div class="flex items-start gap-2">
+                          @if (showLineNumbers()) {
+                            <span class="select-none text-rose-700 text-[10px] w-5 text-right tabular-nums pt-0.5">
+                              !
+                            </span>
+                          }
+                          <div
+                            [class.whitespace-pre-wrap]="wrapOutput()"
+                            [class.whitespace-pre]="!wrapOutput()"
+                            class="flex-1"
+                            [innerHTML]="highlightTracebackLine(tLine)"></div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Tab 2: Dedicated Error Diagnostics & Remediation Guide -->
+            @if (activeTerminalTab() === 'diagnostics') {
+              <div
+                [class]="isTerminalMaximized() ? 'min-h-[500px] max-h-[640px]' : 'min-h-[340px] max-h-[460px]'"
+                class="p-5 overflow-y-auto space-y-4">
+                @if (parsedError(); as err) {
+                  <!-- Error Summary Card -->
+                  <div class="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-mono font-bold text-xs border border-rose-500/40">
+                        {{ err.type }}
+                      </span>
+                      @if (err.line) {
+                        <span class="text-xs font-mono font-semibold text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/30">
+                          main.py : Line {{ err.line }}
+                        </span>
+                      }
+                    </div>
+
+                    <div class="text-sm font-bold text-rose-200">
+                      {{ err.message }}
+                    </div>
+
+                    @if (err.codeSnippet) {
+                      <div class="p-2.5 rounded-lg bg-black/60 border border-rose-900/60 font-mono text-xs text-rose-300">
+                        <span class="text-slate-500 select-none mr-2">{{ err.line ? err.line : '1' }} |</span>
+                        <span>{{ err.codeSnippet }}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Diagnostic Insights -->
+                  <div class="space-y-3 text-xs">
+                    <div class="p-3.5 rounded-xl bg-[#091217] border border-slate-800 space-y-1">
+                      <div class="font-bold text-teal-400 flex items-center gap-1.5">
+                        <mat-icon class="text-sm">lightbulb</mat-icon>
+                        <span>Why This Error Occurred</span>
+                      </div>
+                      <p class="text-slate-300 leading-relaxed">{{ err.explanation }}</p>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-[#091217] border border-slate-800 space-y-1">
+                      <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <mat-icon class="text-sm">build</mat-icon>
+                        <span>How to Fix It</span>
+                      </div>
+                      <p class="text-slate-300 leading-relaxed">{{ err.remediation }}</p>
+                    </div>
+                  </div>
+                } @else {
+                  <!-- No Error State -->
+                  <div class="text-center py-8 space-y-3">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto">
+                      <mat-icon class="text-2xl">check_circle</mat-icon>
+                    </div>
+                    <div class="text-sm font-bold text-slate-200">No Runtime Errors Detected</div>
+                    <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                      Your script executed cleanly with exit code 0. If you wish to test error diagnostics, click any test trigger below:
+                    </p>
+                  </div>
+                }
+
+                <!-- Test Error Trigger Presets -->
+                <div class="pt-3 border-t border-slate-800 space-y-2">
+                  <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    Test Python Exceptions Hands-on:
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <button
+                      type="button"
+                      (click)="loadErrorPreset('syntax')"
+                      class="p-2 text-left rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors">
+                      <div class="font-bold text-rose-400">SyntaxError</div>
+                      <div class="text-[10px] text-slate-400">Missing colon or unclosed paren</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="loadErrorPreset('zerodiv')"
+                      class="p-2 text-left rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors">
+                      <div class="font-bold text-rose-400">ZeroDivisionError</div>
+                      <div class="text-[10px] text-slate-400">Division by zero divisor</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="loadErrorPreset('name')"
+                      class="p-2 text-left rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors">
+                      <div class="font-bold text-rose-400">NameError</div>
+                      <div class="text-[10px] text-slate-400">Undefined variable reference</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="loadErrorPreset('type')"
+                      class="p-2 text-left rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors">
+                      <div class="font-bold text-rose-400">TypeError</div>
+                      <div class="text-[10px] text-slate-400">Incompatible operand types</div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Tab 3: Raw Text Console -->
+            @if (activeTerminalTab() === 'raw') {
+              <div
+                [class]="isTerminalMaximized() ? 'min-h-[500px] max-h-[640px]' : 'min-h-[340px] max-h-[460px]'"
+                class="p-4 font-mono text-xs text-slate-200 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                {{ getFullRawOutput() || '# No execution output logged yet.' }}
+              </div>
+            }
+
+            <!-- Tab 4: Virtual File System (VFS) -->
+            @if (activeTerminalTab() === 'vfs') {
+              <div
+                [class]="isTerminalMaximized() ? 'min-h-[500px] max-h-[640px]' : 'min-h-[340px] max-h-[460px]'"
+                class="p-4 overflow-y-auto space-y-3 font-mono text-xs">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <span class="text-teal-400 font-bold text-xs">VFS /workspace/ Files</span>
+                  <span class="text-[11px] text-slate-400">In-memory Python open() streams</span>
+                </div>
+
+                <div class="space-y-2">
+                  @for (file of runner.getVirtualFilesList(); track file.name) {
+                    <div class="p-3 rounded-xl bg-[#091217] border border-slate-800 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <mat-icon class="text-sm text-teal-400">description</mat-icon>
+                        <span class="text-slate-200 font-bold">{{ file.name }}</span>
+                      </div>
+                      <span class="text-[11px] text-slate-400 tabular-nums">{{ file.size }} bytes</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Interactive Terminal REPL Prompt (>>>) Bar at bottom -->
+            <div class="p-2.5 bg-[#080E12] border-t border-slate-800/90 flex items-center gap-2">
+              <span class="text-teal-400 font-mono font-bold text-xs select-none">>>></span>
+              <input
+                type="text"
+                [(ngModel)]="replInput"
+                (keydown.enter)="onReplSubmit()"
+                placeholder="Type Python one-liner (e.g. 2**10, type(d), print('hi'))..."
+                class="flex-1 bg-transparent text-slate-100 font-mono text-xs focus:outline-none placeholder:text-slate-600" />
+              <button
+                type="button"
+                (click)="onReplSubmit()"
+                [disabled]="!replInput.trim()"
+                class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-30 text-white font-bold text-[11px] transition-colors">
+                Eval
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -224,7 +605,15 @@ export class PlaygroundComponent {
   readonly isRunning = signal<boolean>(false);
   readonly executionResult = signal<ExecutionResult | null>(null);
   readonly hasCopied = signal<boolean>(false);
-  readonly showVfs = signal<boolean>(false);
+  readonly hasCopiedTerminal = signal<boolean>(false);
+  readonly showLineNumbers = signal<boolean>(true);
+  readonly wrapOutput = signal<boolean>(true);
+  readonly isTerminalMaximized = signal<boolean>(false);
+  readonly activeTerminalTab = signal<'terminal' | 'diagnostics' | 'raw' | 'vfs'>('terminal');
+
+  // Terminal interactive state
+  replInput = '';
+  readonly terminalHistory = signal<TerminalEntry[]>([]);
 
   // Quiz state
   readonly selectedQuizAnswer = signal<number | null>(null);
@@ -234,6 +623,45 @@ export class PlaygroundComponent {
   currentCode = '';
 
   readonly activeLesson = this.state.activeLesson;
+
+  // Computed Parsed Error
+  readonly parsedError = computed<ParsedPythonError | null>(() => {
+    const res = this.executionResult();
+    if (!res || !res.stderr) return null;
+
+    const stderr = res.stderr;
+
+    // Detect error name & message
+    const match = stderr.match(/([A-Z][a-zA-Z]*(?:Error|Exception)): (.*)/);
+    const errType = match ? match[1] : 'RuntimeError';
+    const errMsg = match ? match[2] : stderr.trim();
+
+    // Detect line number: File "...", line X
+    const lineMatch = stderr.match(/line (\d+)/i);
+    const lineNum = lineMatch ? parseInt(lineMatch[1], 10) : null;
+
+    // Extract code snippet if present in traceback
+    let snippet: string | null = null;
+    const lines = stderr.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('line ') && i + 1 < lines.length) {
+        snippet = lines[i + 1].trim();
+        break;
+      }
+    }
+
+    const { explanation, remediation } = this.getRemediationForError(errType);
+
+    return {
+      type: errType,
+      message: errMsg,
+      line: lineNum,
+      codeSnippet: snippet,
+      explanation,
+      remediation,
+      rawTraceback: stderr
+    };
+  });
 
   private presetMap: Record<string, { code: string; lessonId: string; moduleId: string }> = {
     'diamond-mro': {
@@ -302,51 +730,39 @@ class VulnerabilityScanner:
         return "Scanning CVE database for known vulnerabilities..."
 
 class SecuritySuite:
-    """Coordinates security operations through composition (HAS-A)"""
-    def __init__(self):
-        self.port_scanner = PortScanner()
-        self.malware_scanner = MalwareScanner()
+    def __init__(self, tools):
+        self.tools = tools  # HAS-A relationship
 
-    def full_scan(self):
-        return [
-            self.port_scanner.scan(),
-            self.malware_scanner.scan()
-        ]
+    def execute_all(self):
+        return [tool.scan() for tool in self.tools]
 
-suite = SecuritySuite()
-print("Default scan:", suite.full_scan())
+suite = SecuritySuite([PortScanner(), MalwareScanner()])
+print("Default scan:", suite.execute_all())
 
-# Hot-swap component without modifying SecuritySuite class!
-suite.port_scanner = VulnerabilityScanner()
-print("\\nAfter component swap:", suite.full_scan())`
+suite.tools[0] = VulnerabilityScanner()
+print("\\nAfter component swap:", suite.execute_all())`
     },
     'json-custom': {
-      moduleId: 'json-csv-serialization',
+      moduleId: 'file-formats-serialization',
       lessonId: 'json-custom-objects',
       code: `import json
 
-class Person:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
+class ServerNode:
+    def __init__(self, hostname, ip_addr, ports):
+        self.hostname = hostname
+        self.ip_addr = ip_addr
+        self.ports = ports
 
-    def __repr__(self):
-        return f"Person(name={self.name!r}, age={self.age})"
+# Instantiate custom OOP object
+node = ServerNode("edge-proxy-01", "10.0.4.15", [80, 443, 9090])
 
-# 1. Serializing using __dict__
-p = Person("Ali", 25)
-json_str = json.dumps(p.__dict__, indent=2)
-print("Serialized JSON:")
-print(json_str)
-
-# 2. Deserializing back to Person object using **kwargs unpacking
-data = json.loads(json_str)
-p2 = Person(**data)
-print("\\nDeserialized object:", p2)
-print(f"p2.name = {p2.name}, p2.age = {p2.age}")`
+# Custom JSON Serializer via default parameter
+json_output = json.dumps(node, default=lambda o: o.__dict__, indent=2)
+print("Serialized JSON payload:")
+print(json_output)`
     },
     'regex-named': {
-      moduleId: 'regex-engine',
+      moduleId: 'regular-expressions-re',
       lessonId: 'regex-groups',
       code: `import re
 
@@ -482,6 +898,14 @@ print("Decoded String:", decoded_bytes.decode('utf-8'))`
     try {
       const res = await this.runner.runCode(this.currentCode);
       this.executionResult.set(res);
+
+      // Auto-switch to diagnostics tab if error happened
+      if (!res.success && res.stderr) {
+        this.activeTerminalTab.set('diagnostics');
+      } else {
+        this.activeTerminalTab.set('terminal');
+      }
+
       // If active lesson exists, mark completed
       const mod = this.state.activeModule();
       const les = this.state.activeLesson();
@@ -511,13 +935,245 @@ print("Decoded String:", decoded_bytes.decode('utf-8'))`
     }
   }
 
-  toggleVfsView() {
-    this.showVfs.update(v => !v);
+  copyTerminalOutput() {
+    if (typeof navigator !== 'undefined') {
+      const text = this.getFullRawOutput();
+      navigator.clipboard.writeText(text);
+      this.hasCopiedTerminal.set(true);
+      setTimeout(() => this.hasCopiedTerminal.set(false), 2000);
+    }
+  }
+
+  clearTerminal() {
+    this.executionResult.set(null);
+    this.terminalHistory.set([]);
+  }
+
+  toggleLineNumbers() {
+    this.showLineNumbers.update(v => !v);
+  }
+
+  toggleWrap() {
+    this.wrapOutput.update(v => !v);
+  }
+
+  toggleMaximize() {
+    this.isTerminalMaximized.update(v => !v);
+  }
+
+  async onReplSubmit() {
+    const expr = this.replInput.trim();
+    if (!expr) return;
+
+    this.terminalHistory.update(hist => [
+      ...hist,
+      { type: 'cmd', text: expr, timestamp: new Date().toLocaleTimeString() }
+    ]);
+    this.replInput = '';
+
+    const res = await this.runner.evalQuickExpression(expr);
+    this.terminalHistory.update(hist => [
+      ...hist,
+      {
+        type: 'repl',
+        text: res.output,
+        timestamp: new Date().toLocaleTimeString(),
+        isError: res.isError
+      }
+    ]);
+  }
+
+  loadErrorPreset(errorType: 'syntax' | 'zerodiv' | 'name' | 'type') {
+    switch (errorType) {
+      case 'syntax':
+        this.currentCode = `# Intentional SyntaxError Demonstration\ndef validate_system(\n    print("Missing closing parenthesis on def")`;
+        break;
+      case 'zerodiv':
+        this.currentCode = `# Intentional ZeroDivisionError Demonstration\ntotal_requests = 1000\nactive_servers = 0\n\n# This operation fails at runtime:\nload_per_server = total_requests / active_servers\nprint("Load:", load_per_server)`;
+        break;
+      case 'name':
+        this.currentCode = `# Intentional NameError Demonstration\nactive_role = "Security Analyst"\n# Accessing undefined identifier 'unregistered_credential'\nprint("Accessing:", unregistered_credential)`;
+        break;
+      case 'type':
+        this.currentCode = `# Intentional TypeError Demonstration\nport_prefix = "PORT_"\nport_number = 8080\n\n# Adding string directly to integer fails in Python:\nendpoint = port_prefix + port_number\nprint(endpoint)`;
+        break;
+    }
+    this.executeCode();
+  }
+
+  getStdoutLines(): string[] {
+    const stdout = this.executionResult()?.stdout;
+    if (!stdout) return [];
+    return stdout.split('\n');
+  }
+
+  getStderrLines(): string[] {
+    const stderr = this.executionResult()?.stderr;
+    if (!stderr) return [];
+    return stderr.split('\n');
+  }
+
+  getFullRawOutput(): string {
+    const res = this.executionResult();
+    if (!res) return '';
+    const parts: string[] = [];
+    if (res.stdout) parts.push(res.stdout);
+    if (res.stderr) parts.push(res.stderr);
+    return parts.join('\n');
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /**
+   * Dedicated syntax highlighting parser for Python console output lines.
+   */
+  highlightOutputLine(line: string): string {
+    if (!line) return '&nbsp;';
+
+    const escaped = this.escapeHtml(line);
+
+    // 1. Python Section Banners e.g. "--- Running Unified Security Pipeline ---"
+    if (/^\s*[-=]{3,}.*?[-=]{3,}\s*$/.test(line)) {
+      return `<span class="text-teal-300 font-bold bg-teal-950/40 px-2 py-0.5 rounded border border-teal-500/20">${escaped}</span>`;
+    }
+
+    // 2. Python Object representations <__main__.Class object at 0x...>
+    let formatted = escaped.replace(
+      /(&lt;[a-zA-Z0-9_.]+\s+object\s+at\s+0x[0-9a-fA-F]+&gt;)/g,
+      '<span class="text-violet-300 font-semibold italic">$1</span>'
+    );
+
+    // 3. String literals '...' and "..."
+    formatted = formatted.replace(
+      /(&quot;.*?&quot;|'[^']*')/g,
+      '<span class="text-emerald-400 font-semibold">$1</span>'
+    );
+
+    // 4. Booleans (True, False) and None
+    formatted = formatted.replace(
+      /\b(True|False|None)\b/g,
+      '<span class="text-purple-400 font-bold">$1</span>'
+    );
+
+    // 5. Key-value labels e.g. "Role  :", "Full Dict:", "SHA-256 Digest:"
+    formatted = formatted.replace(
+      /^(\s*[A-Za-z0-9_.\- ]+)(\s*:\s*)/g,
+      '<span class="text-cyan-300 font-medium">$1</span><span class="text-slate-500">$2</span>'
+    );
+
+    // 6. SHA-256 / Hex hashes (32 to 64 hex characters)
+    formatted = formatted.replace(
+      /\b([0-9a-fA-F]{32,64})\b/g,
+      '<span class="text-teal-300 font-mono underline decoration-teal-500/30">$1</span>'
+    );
+
+    // 7. Numeric values (integers, floats, bytes count)
+    formatted = formatted.replace(
+      /(?<![a-zA-Z0-9_])(\d+(?:\.\d+)?)(?![a-zA-Z0-9_])/g,
+      '<span class="text-amber-400">$1</span>'
+    );
+
+    // 8. Positive and negative status badges
+    formatted = formatted.replace(
+      /\b(Resolved|Active|Passed|ALLOW|SUCCESS)\b/gi,
+      '<span class="text-emerald-400 font-bold">$1</span>'
+    );
+
+    return formatted;
+  }
+
+  /**
+   * Dedicated syntax highlighting parser for Python tracebacks and error messages.
+   */
+  highlightTracebackLine(line: string): string {
+    if (!line) return '&nbsp;';
+
+    const escaped = this.escapeHtml(line);
+
+    // 1. Traceback header
+    if (line.includes('Traceback (most recent call last):')) {
+      return `<span class="text-amber-400 font-bold flex items-center gap-1"><span class="text-rose-400">✕</span> ${escaped}</span>`;
+    }
+
+    // 2. File and Line location
+    if (/File &quot;.*?&quot;, line \d+/.test(escaped)) {
+      return escaped.replace(
+        /File &quot;(.*?)&quot;, line (\d+)(.*)/,
+        'File "<span class="text-cyan-300 font-semibold">$1</span>", line <span class="text-amber-300 font-extrabold underline">$2</span><span class="text-slate-400">$3</span>'
+      );
+    }
+
+    // 3. Error pointer line: ^^^
+    if (/^\s*\^+/.test(line)) {
+      return `<span class="text-rose-400 font-extrabold text-base leading-none select-none">${escaped}</span>`;
+    }
+
+    // 4. Exception Name and Description: SyntaxError: ...
+    if (/^([A-Z][a-zA-Z]*(?:Error|Exception)): (.*)/.test(line)) {
+      return escaped.replace(
+        /^([A-Z][a-zA-Z]*(?:Error|Exception)): (.*)/,
+        '<span class="text-rose-400 font-extrabold text-sm">$1:</span> <span class="text-rose-200 font-semibold">$2</span>'
+      );
+    }
+
+    // Code line inside traceback
+    return `<span class="text-slate-300 font-medium pl-2">${escaped}</span>`;
+  }
+
+  private getRemediationForError(errorType: string): { explanation: string; remediation: string } {
+    switch (errorType) {
+      case 'SyntaxError':
+        return {
+          explanation: 'Python syntax violation. The parser encountered a token structure that breaks Python grammar rules.',
+          remediation: 'Check for unclosed parentheses (), unclosed string quotes, or missing colon (:) after def, class, if, for, while statements.'
+        };
+      case 'IndentationError':
+        return {
+          explanation: 'Mismatched block indentation. Python uses consistent 4-space whitespace rather than braces to define code blocks.',
+          remediation: 'Ensure all lines within your function, loop, or class block share identical 4-space indentations.'
+        };
+      case 'NameError':
+        return {
+          explanation: 'Referenced identifier not found in the local, enclosing, or global namespace.',
+          remediation: 'Verify that the variable or function name is declared before being referenced and check for typos or capitalization errors.'
+        };
+      case 'TypeError':
+        return {
+          explanation: 'Incompatible data types used in an operation or argument list.',
+          remediation: 'Convert data types explicitly before combining (e.g. use str(number) or f"{text}{number}" instead of direct addition).'
+        };
+      case 'ZeroDivisionError':
+        return {
+          explanation: 'Attempted mathematical division or modulo by zero.',
+          remediation: 'Add a check like "if divisor != 0:" before executing division or ensure the divisor variable is properly initialized.'
+        };
+      case 'FileNotFoundError':
+        return {
+          explanation: 'The requested file does not exist in the virtual filesystem.',
+          remediation: 'Inspect the VFS Files tab to verify existing files (sample.txt, config.txt, user.json) or open in write mode ("w") to create it.'
+        };
+      case 'AttributeError':
+        return {
+          explanation: 'The object does not have the specified attribute or method.',
+          remediation: 'Verify the method name spelling or ensure the class definition includes "def method_name(self):".'
+        };
+      default:
+        return {
+          explanation: 'Python encountered an unhandled exception during execution.',
+          remediation: 'Review the line number in the traceback above, verify variable states, and ensure valid operations.'
+        };
+    }
   }
 
   submitQuiz(index: number) {
     this.selectedQuizAnswer.set(index);
-    const q = this.activeLesson()?.quiz;
+    const q = this.activeLesson().quiz;
     if (q) {
       const correct = index === q.answerIndex;
       this.isQuizCorrect.set(correct);
