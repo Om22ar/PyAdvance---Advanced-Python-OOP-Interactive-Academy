@@ -21,6 +21,12 @@ export class LearningStateService {
   readonly activities = signal<ActivityItem[]>(INITIAL_ACTIVITIES);
   readonly skills = signal(INITIAL_SKILLS);
 
+  // User Settings
+  readonly editorFontSize = signal<number>(13);
+  readonly autoRunCode = signal<boolean>(false);
+  readonly tabSize = signal<number>(4);
+  readonly preferredEngine = signal<'wasm' | 'instant'>('wasm');
+
   // Active module & lesson computed
   readonly activeModule = computed(() => {
     const id = this.selectedModuleId();
@@ -105,6 +111,14 @@ export class LearningStateService {
       ]);
     }
 
+    this.saveToStorage();
+  }
+
+  resetProgress() {
+    this.modules.set(CURRICULUM_DATA);
+    this.dayStreak.set(1);
+    this.practiceTimeHours.set(0.5);
+    this.activities.set(INITIAL_ACTIVITIES);
     this.saveToStorage();
   }
 

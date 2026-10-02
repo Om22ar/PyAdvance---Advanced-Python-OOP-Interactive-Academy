@@ -44,7 +44,7 @@ import { LearningStateService } from '../../services/learning-state.service';
         </div>
       </div>
 
-      <!-- Zone 3: Actions (Deploy to Surge, Theme & Profile) -->
+      <!-- Zone 3: Actions (Deploy to Surge, Theme & Profile, Settings) -->
       <div class="flex items-center gap-2 sm:gap-3">
         <button
           (click)="state.setView('surge')"
@@ -59,6 +59,14 @@ import { LearningStateService } from '../../services/learning-state.service';
           title="Toggle Dark / Light Surface"
           class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           <mat-icon class="text-lg leading-none">{{ state.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        </button>
+
+        <button
+          type="button"
+          (click)="openSettings()"
+          title="Platform &amp; Environment Settings"
+          class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <mat-icon class="text-lg leading-none">settings</mat-icon>
         </button>
       </div>
     </header>
@@ -112,6 +120,13 @@ import { LearningStateService } from '../../services/learning-state.service';
               <mat-icon class="text-emerald-400">cloud_upload</mat-icon>
               <span>Surge.sh Deploy</span>
             </button>
+
+            <button
+              (click)="openSettings(); isMobileMenuOpen.set(false)"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40">
+              <mat-icon>settings</mat-icon>
+              <span>Settings</span>
+            </button>
           </div>
 
           <div class="pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-1">
@@ -122,15 +137,163 @@ import { LearningStateService } from '../../services/learning-state.service';
         </div>
       </div>
     }
+
+    <!-- Settings Modal -->
+    @if (isSettingsOpen()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div class="bg-white dark:bg-[#11232B] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col">
+          <!-- Modal Header -->
+          <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/40">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                <mat-icon>settings</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Settings &amp; Environment</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Customize Python runtime and learning preferences</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="closeSettings()"
+              class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
+            <!-- Section 1: Python Engine -->
+            <div class="space-y-3">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Python Runtime Engine
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  (click)="state.preferredEngine.set('wasm')"
+                  [class]="state.preferredEngine() === 'wasm'
+                    ? 'p-3 rounded-xl border-2 border-teal-500 bg-teal-50/50 dark:bg-teal-950/30 text-left transition-all'
+                    : 'p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 text-left transition-all'">
+                  <div class="text-xs font-bold text-slate-900 dark:text-white">CPython 3.12 (WASM)</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">True Pyodide WebAssembly</div>
+                </button>
+                <button
+                  type="button"
+                  (click)="state.preferredEngine.set('instant')"
+                  [class]="state.preferredEngine() === 'instant'
+                    ? 'p-3 rounded-xl border-2 border-teal-500 bg-teal-50/50 dark:bg-teal-950/30 text-left transition-all'
+                    : 'p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 text-left transition-all'">
+                  <div class="text-xs font-bold text-slate-900 dark:text-white">Instant Sandbox</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Zero-latency simulator</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Section 2: Editor Formatting -->
+            <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Code Editor Preferences
+              </div>
+              <div class="flex items-center justify-between">
+                <label for="font-size-select" class="text-xs font-medium text-slate-700 dark:text-slate-300">Editor Font Size</label>
+                <select
+                  id="font-size-select"
+                  [ngModel]="state.editorFontSize()"
+                  (ngModelChange)="state.editorFontSize.set($event)"
+                  class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">
+                  <option [value]="12">12px (Compact)</option>
+                  <option [value]="13">13px (Default)</option>
+                  <option [value]="14">14px (Medium)</option>
+                  <option [value]="16">16px (Large)</option>
+                </select>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label for="tab-size-select" class="text-xs font-medium text-slate-700 dark:text-slate-300">Tab Indentation</label>
+                <select
+                  id="tab-size-select"
+                  [ngModel]="state.tabSize()"
+                  (ngModelChange)="state.tabSize.set($event)"
+                  class="px-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">
+                  <option [value]="4">4 Spaces (PEP 8 standard)</option>
+                  <option [value]="2">2 Spaces</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Section 3: Study Target -->
+            <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Weekly Target
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Target Hours Per Week</span>
+                <span class="text-xs font-bold text-teal-600 dark:text-teal-400 font-mono">{{ state.targetWeeklyHours() }} hrs</span>
+              </div>
+              <input
+                type="range"
+                min="2"
+                max="15"
+                step="0.5"
+                [ngModel]="state.targetWeeklyHours()"
+                (ngModelChange)="state.targetWeeklyHours.set($event)"
+                class="w-full accent-teal-500" />
+            </div>
+
+            <!-- Section 4: Reset Progress -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Reset Local Progress</div>
+                <div class="text-[11px] text-slate-400">Restore syllabus milestones and activity</div>
+              </div>
+              <button
+                type="button"
+                (click)="onResetProgress()"
+                class="px-3 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 rounded-xl transition-colors">
+                {{ hasReset() ? 'Reset Completed' : 'Reset Progress' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex justify-end">
+            <button
+              type="button"
+              (click)="closeSettings()"
+              class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-all">
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `
 })
 export class TopbarComponent {
   readonly state = inject(LearningStateService);
   readonly isMobileMenuOpen = signal<boolean>(false);
+  readonly isSettingsOpen = signal<boolean>(false);
+  readonly hasReset = signal<boolean>(false);
   readonly searchQuery = signal<string>('');
 
   toggleMobileMenu() {
     this.isMobileMenuOpen.update(v => !v);
+  }
+
+  openSettings() {
+    this.isSettingsOpen.set(true);
+    this.hasReset.set(false);
+  }
+
+  closeSettings() {
+    this.isSettingsOpen.set(false);
+  }
+
+  onResetProgress() {
+    this.state.resetProgress();
+    this.hasReset.set(true);
+    setTimeout(() => this.hasReset.set(false), 2500);
   }
 
   navigateAndClose(view: 'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge') {

@@ -77,11 +77,12 @@ import { PythonRunnerService, ExecutionResult } from '../../services/python-runn
           </div>
 
           <!-- Code Textarea -->
-          <div class="relative flex-1 min-h-[360px] p-4 font-mono text-sm leading-relaxed text-emerald-300 bg-[#0b1419]">
+          <div class="relative flex-1 min-h-[360px] p-4 font-mono leading-relaxed text-emerald-300 bg-[#0b1419]">
             <textarea
               [(ngModel)]="currentCode"
               spellcheck="false"
-              class="w-full h-full min-h-[340px] bg-transparent text-slate-100 font-mono text-xs sm:text-sm focus:outline-none resize-none leading-relaxed selection:bg-teal-500/30"
+              [style.font-size.px]="state.editorFontSize()"
+              class="w-full h-full min-h-[340px] bg-transparent text-slate-100 font-mono focus:outline-none resize-none leading-relaxed selection:bg-teal-500/30"
               placeholder="# Write your Python code here..."></textarea>
           </div>
 
