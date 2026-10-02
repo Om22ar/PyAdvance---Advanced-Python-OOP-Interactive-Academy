@@ -121,12 +121,22 @@ import { LearningStateService } from '../../services/learning-state.service';
             </div>
           </div>
         </div>
-        <button
-          (click)="state.toggleDarkMode()"
-          title="Toggle light / dark surface"
-          class="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors">
-          <mat-icon class="text-lg leading-none">{{ state.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-        </button>
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            (click)="state.openSettings()"
+            title="Open Settings &amp; Hosting"
+            class="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors">
+            <mat-icon class="text-lg leading-none">settings</mat-icon>
+          </button>
+          <button
+            type="button"
+            (click)="state.toggleDarkMode()"
+            title="Toggle light / dark surface"
+            class="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors">
+            <mat-icon class="text-lg leading-none">{{ state.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          </button>
+        </div>
       </div>
     </aside>
   `

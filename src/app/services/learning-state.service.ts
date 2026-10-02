@@ -26,6 +26,7 @@ export class LearningStateService {
   readonly autoRunCode = signal<boolean>(false);
   readonly tabSize = signal<number>(4);
   readonly preferredEngine = signal<'wasm' | 'instant'>('wasm');
+  readonly isSettingsOpen = signal<boolean>(false);
 
   // Active module & lesson computed
   readonly activeModule = computed(() => {
@@ -78,6 +79,14 @@ export class LearningStateService {
 
   toggleDarkMode() {
     this.isDarkMode.update(v => !v);
+  }
+
+  openSettings() {
+    this.isSettingsOpen.set(true);
+  }
+
+  closeSettings() {
+    this.isSettingsOpen.set(false);
   }
 
   markLessonCompleted(moduleId: string, lessonId: string) {
