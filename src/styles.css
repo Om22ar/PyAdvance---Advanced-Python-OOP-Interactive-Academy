@@ -26,3 +26,89 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.6);
 }
+
+/* ==========================================================================
+   Prism.js Lightweight Syntax Highlighting Theme (Tailwind & IDE Optimized)
+   ========================================================================== */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #64748b; /* slate-500 */
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #94a3b8; /* slate-400 */
+}
+
+.token.keyword {
+  color: #fb7185; /* rose-400 */
+  font-weight: 600;
+}
+
+.token.function,
+.token.function-variable {
+  color: #38bdf8; /* sky-400 */
+  font-weight: 600;
+}
+
+.token.class-name {
+  color: #fde047; /* yellow-300 */
+  font-weight: 700;
+}
+
+.token.string,
+.token.char,
+.token.attr-value {
+  color: #34d399; /* emerald-400 */
+}
+
+.token.number {
+  color: #fbbf24; /* amber-400 */
+  font-weight: 500;
+}
+
+.token.boolean,
+.token.constant {
+  color: #c084fc; /* purple-400 */
+  font-weight: 600;
+}
+
+.token.operator,
+.token.entity,
+.token.url {
+  color: #2dd4bf; /* teal-400 */
+}
+
+.token.builtin,
+.token.attr-name {
+  color: #a78bfa; /* violet-400 */
+  font-weight: 500;
+}
+
+.token.decorator,
+.token.annotation {
+  color: #e879f9; /* fuchsia-400 */
+  font-style: italic;
+}
+
+.token.triple-quoted-string {
+  color: #10b981; /* emerald-500 */
+  font-style: italic;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #fdba74; /* orange-300 */
+}
+
+.token.deleted {
+  color: #f87171; /* red-400 */
+}
+
+.token.inserted {
+  color: #4ade80; /* green-400 */
+}
+

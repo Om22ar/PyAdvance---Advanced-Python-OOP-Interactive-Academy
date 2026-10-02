@@ -19,7 +19,7 @@ export class LearningStateService {
     'regex-search-findall'
   ]);
 
-  readonly activeView = signal<'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge'>('overview');
+  readonly activeView = signal<'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'vscode' | 'study'>('overview');
   readonly selectedModuleId = signal<string>('file-handling-modes');
   readonly selectedLessonId = signal<string>('file-modes-intro');
   readonly isDarkMode = signal<boolean>(false);
@@ -118,7 +118,7 @@ export class LearningStateService {
     return this.completedStepIds().filter(id => lessonIds.includes(id));
   }
 
-  setView(view: 'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge') {
+  setView(view: 'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'vscode' | 'study') {
     this.activeView.set(view);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -11,7 +11,7 @@
       <app-topbar />
 
       <!-- View Content Router -->
-      <main class="flex-1 p-4 sm:p-8 lg:p-10 overflow-y-auto">
+      <main [class]="state.activeView() === 'vscode' || state.activeView() === 'study' ? 'flex-1 p-2 sm:p-4 overflow-y-auto' : 'flex-1 p-4 sm:p-8 lg:p-10 overflow-y-auto'">
         @switch (state.activeView()) {
           @case ('overview') {
             <app-overview />
@@ -27,6 +27,12 @@
           }
           @case ('surge') {
             <app-surge-hub />
+          }
+          @case ('vscode') {
+            <app-vscode-editor />
+          }
+          @case ('study') {
+            <app-study-reader />
           }
         }
       </main>

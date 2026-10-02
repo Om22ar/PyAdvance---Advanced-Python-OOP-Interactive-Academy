@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LearningStateService } from '../../services/learning-state.service';
 import { PythonRunnerService, ExecutionResult } from '../../services/python-runner.service';
+import { SyntaxHighlighter } from '../../services/syntax-highlighter';
 
 export interface ParsedPythonError {
   type: string;
@@ -12,6 +13,7 @@ export interface ParsedPythonError {
   codeSnippet: string | null;
   explanation: string;
   remediation: string;
+  suggestedFix?: string;
   rawTraceback: string;
 }
 
@@ -72,7 +74,7 @@ export interface TerminalEntry {
           <!-- Python Code Editor Card -->
           <div class="bg-[#0b1419] rounded-2xl border border-slate-800 shadow-md flex flex-col flex-1 overflow-hidden">
             <!-- Editor Toolbar -->
-            <div class="px-4 py-3 bg-[#080e12] border-b border-slate-800/80 flex items-center justify-between text-xs">
+            <div class="px-4 py-2.5 bg-[#080e12] border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
               <div class="flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
                 <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
@@ -81,35 +83,162 @@ export interface TerminalEntry {
                   <mat-icon class="text-sm text-teal-400">code</mat-icon>
                   <span>main.py</span>
                 </span>
+
+                <!-- Prism Highlighting Pill Indicator -->
+                <span class="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-violet-950/70 text-violet-300 border border-violet-500/30">
+                  <mat-icon class="text-[12px] leading-none text-violet-400">auto_awesome</mat-icon>
+                  <span>Prism.js Highlight</span>
+                </span>
               </div>
 
-              <div class="flex items-center gap-2">
+              <!-- Editor View Mode Controls & Reset -->
+              <div class="flex items-center gap-1.5">
+                <!-- Mode Switcher: Edit / Highlighted Preview / Split -->
+                <div class="flex items-center bg-slate-900/90 rounded-lg p-0.5 border border-slate-800 text-[11px] font-mono">
+                  <button
+                    type="button"
+                    (click)="editorMode.set('edit')"
+                    [class]="editorMode() === 'edit'
+                      ? 'px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 font-semibold'
+                      : 'px-2 py-0.5 text-slate-400 hover:text-slate-200'"
+                    title="Edit Python Code">
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    (click)="editorMode.set('preview')"
+                    [class]="editorMode() === 'preview'
+                      ? 'px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 font-semibold'
+                      : 'px-2 py-0.5 text-slate-400 hover:text-slate-200'"
+                    title="Syntax Highlighted View (Prism.js)">
+                    Preview
+                  </button>
+                  <button
+                    type="button"
+                    (click)="editorMode.set('split')"
+                    [class]="editorMode() === 'split'
+                      ? 'px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 font-semibold'
+                      : 'px-2 py-0.5 text-slate-400 hover:text-slate-200'"
+                    title="Split Editor & Live Syntax Highlighting">
+                    Split
+                  </button>
+                </div>
+
                 <!-- Engine indicator -->
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-400 border border-teal-500/30">
-                  {{ runner.isWasmReady() ? 'CPython 3.12 (WASM)' : 'Native Sandbox' }}
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-400 border border-teal-500/30 hidden md:inline">
+                  {{ runner.isWasmReady() ? 'CPython 3.12' : 'Sandbox' }}
                 </span>
 
                 <button
                   type="button"
                   (click)="resetCode()"
                   title="Reset code snippet to default"
-                  class="px-2.5 py-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors text-xs flex items-center gap-1">
+                  class="px-2 py-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors text-xs flex items-center gap-1">
                   <mat-icon class="text-sm">refresh</mat-icon>
                   <span class="hidden sm:inline">Reset</span>
                 </button>
               </div>
             </div>
 
-            <!-- Code Textarea with Ctrl+Enter binding -->
-            <div class="relative flex-1 min-h-[380px] p-4 font-mono leading-relaxed bg-[#0b1419]">
-              <textarea
-                [(ngModel)]="currentCode"
-                (keydown.control.enter)="executeCode()"
-                (keydown.meta.enter)="executeCode()"
-                spellcheck="false"
-                [style.font-size.px]="state.editorFontSize()"
-                class="w-full h-full min-h-[360px] bg-transparent text-slate-100 font-mono focus:outline-none resize-none leading-relaxed selection:bg-teal-500/30 font-medium"
-                placeholder="# Write your Python code here..."></textarea>
+            <!-- Code Editor Workspace with 3 Modes (Edit, Prism Preview, Split) -->
+            <div class="relative flex-1 min-h-[380px] bg-[#0b1419] flex overflow-hidden">
+              <!-- MODE 1: Interactive Edit Mode with Line Numbers Gutter -->
+              @if (editorMode() === 'edit') {
+                <div class="flex-1 flex overflow-hidden">
+                  <!-- Line numbers gutter -->
+                  <div class="w-10 sm:w-12 bg-[#080e12] text-slate-600 font-mono text-xs text-right pr-2.5 pt-4 select-none border-r border-slate-800/80 space-y-0.5 shrink-0">
+                    @for (lineNum of getCodeLineNumbers(); track lineNum) {
+                      <div class="leading-relaxed text-[11px]">{{ lineNum }}</div>
+                    }
+                  </div>
+
+                  <!-- Textarea with Tab indentation & Ctrl+Enter -->
+                  <div class="flex-1 relative p-4 font-mono leading-relaxed bg-[#0b1419]">
+                    <textarea
+                      [(ngModel)]="currentCode"
+                      (keydown.control.enter)="executeCode()"
+                      (keydown.meta.enter)="executeCode()"
+                      (keydown.tab)="handleTabKey($event)"
+                      spellcheck="false"
+                      [style.font-size.px]="state.editorFontSize()"
+                      class="w-full h-full min-h-[360px] bg-transparent text-slate-100 font-mono focus:outline-none resize-none leading-relaxed selection:bg-teal-500/30 font-medium text-xs sm:text-sm"
+                      placeholder="# Write your Python code here... (Tab key supported for 4-space indent)"></textarea>
+                  </div>
+                </div>
+              }
+
+              <!-- MODE 2: Full Prism.js Syntax-Highlighted Inspector Mode -->
+              @if (editorMode() === 'preview') {
+                <div class="flex-1 flex flex-col overflow-hidden bg-[#0b1419]">
+                  <!-- Inspector notification bar -->
+                  <div class="px-4 py-1.5 bg-violet-950/30 border-b border-violet-500/20 text-[11px] text-violet-300 font-mono flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                      <mat-icon class="text-xs text-violet-400">palette</mat-icon>
+                      <span>Prism.js Syntax Highlight View - Python Grammar Tokenized</span>
+                    </span>
+                    <button
+                      type="button"
+                      (click)="editorMode.set('edit')"
+                      class="text-teal-400 hover:underline flex items-center gap-1">
+                      <mat-icon class="text-xs">edit</mat-icon>
+                      <span>Click to Edit</span>
+                    </button>
+                  </div>
+
+                  <div class="flex-1 overflow-y-auto p-4 flex font-mono text-xs sm:text-sm leading-relaxed">
+                    <!-- Line numbers -->
+                    <div class="w-10 sm:w-12 text-slate-600 text-right pr-3 select-none border-r border-slate-800/80 space-y-0.5 shrink-0">
+                      @for (lineNum of getCodeLineNumbers(); track lineNum) {
+                        <div class="leading-relaxed text-[11px]">{{ lineNum }}</div>
+                      }
+                    </div>
+
+                    <!-- Highlighted Code with Prism tokens -->
+                    <div class="flex-1 pl-4 overflow-x-auto">
+                      <pre class="m-0 p-0 font-mono bg-transparent text-slate-100"><code class="language-python" [innerHTML]="highlightedFullCode()"></code></pre>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- MODE 3: Split Editor + Live Prism Preview -->
+              @if (editorMode() === 'split') {
+                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden">
+                  <!-- Left side: Textarea -->
+                  <div class="flex flex-col h-full min-h-[360px] bg-[#0b1419]">
+                    <div class="px-3 py-1 bg-[#080e12] border-b border-slate-800 text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                      <span>EDIT SOURCE</span>
+                      <span class="text-teal-400">Ctrl+Enter to Run</span>
+                    </div>
+                    <div class="flex-1 flex overflow-hidden">
+                      <div class="w-8 bg-[#080e12] text-slate-600 font-mono text-[10px] text-right pr-2 pt-3 select-none border-r border-slate-800/80 space-y-0.5 shrink-0">
+                        @for (lineNum of getCodeLineNumbers(); track lineNum) {
+                          <div class="leading-relaxed">{{ lineNum }}</div>
+                        }
+                      </div>
+                      <textarea
+                        [(ngModel)]="currentCode"
+                        (keydown.control.enter)="executeCode()"
+                        (keydown.meta.enter)="executeCode()"
+                        (keydown.tab)="handleTabKey($event)"
+                        spellcheck="false"
+                        class="w-full h-full p-3 bg-transparent text-slate-100 font-mono focus:outline-none resize-none leading-relaxed text-xs selection:bg-teal-500/30"
+                        placeholder="# Type code here..."></textarea>
+                    </div>
+                  </div>
+
+                  <!-- Right side: Live Prism Tokenized Preview -->
+                  <div class="flex flex-col h-full min-h-[360px] bg-[#070c0f]">
+                    <div class="px-3 py-1 bg-[#080e12] border-b border-slate-800 text-[10px] font-mono text-violet-300 flex items-center justify-between">
+                      <span>PRISM SYNTAX TOKENS</span>
+                      <span class="text-emerald-400">Live</span>
+                    </div>
+                    <div class="flex-1 p-3 overflow-y-auto font-mono text-xs leading-relaxed text-slate-100">
+                      <pre class="m-0 p-0 font-mono bg-transparent"><code class="language-python" [innerHTML]="highlightedFullCode()"></code></pre>
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
 
             <!-- Editor Actions Bar -->
@@ -327,7 +456,7 @@ export interface TerminalEntry {
               </div>
             </div>
 
-            <!-- Tab 1: Dedicated Syntax-Highlighted Terminal View -->
+            <!-- Tab 1: Dedicated Syntax-Highlighted Terminal View with Prism.js -->
             @if (activeTerminalTab() === 'terminal') {
               <div
                 [class]="isTerminalMaximized() ? 'min-h-[500px] max-h-[640px]' : 'min-h-[340px] max-h-[460px]'"
@@ -336,9 +465,12 @@ export interface TerminalEntry {
                 <!-- Welcome Banner when idle and no output yet -->
                 @if (!isRunning() && !executionResult() && terminalHistory().length === 0) {
                   <div class="py-4 text-slate-500 space-y-1.5 font-mono text-xs">
-                    <div class="text-teal-400 font-bold">Python 3.12.0 (PyAdvance Cloud Interactive Engine)</div>
+                    <div class="text-teal-400 font-bold flex items-center gap-1.5">
+                      <span>Python 3.12.0 (PyAdvance Cloud Interactive Engine)</span>
+                      <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-violet-950/80 text-violet-300 border border-violet-500/30">Prism Powered</span>
+                    </div>
                     <div>Type your code in <span class="text-slate-300">main.py</span> and click <span class="text-emerald-400 font-semibold">[Run Code]</span> or press <kbd class="px-1 py-0.5 rounded bg-slate-800 text-teal-300 text-[10px]">Ctrl+Enter</kbd>.</div>
-                    <div class="text-slate-400 pt-1 text-[11px]">Supports full Python OOP, C3 MRO linearizations, seek/tell byte streams, and syntax-highlighted error diagnostics.</div>
+                    <div class="text-slate-400 pt-1 text-[11px]">Features real-time Prism.js syntax tokenization, C3 MRO linearizations, seek/tell byte streams, and intelligent diagnostics.</div>
                   </div>
                 }
 
@@ -366,18 +498,18 @@ export interface TerminalEntry {
                   <div class="space-y-1">
                     @if (entry.type === 'cmd') {
                       <div class="flex items-center gap-2 text-slate-400 text-[11px] pt-1">
-                        <span class="text-teal-400">>>></span>
-                        <span class="text-slate-200 font-semibold">{{ entry.text }}</span>
+                        <span class="text-teal-400 font-bold">>>></span>
+                        <span class="text-slate-200 font-semibold" [innerHTML]="highlighter.highlightPython(entry.text)"></span>
                       </div>
                     } @else if (entry.type === 'repl') {
                       <div [class]="entry.isError ? 'text-rose-400' : 'text-cyan-300'" class="pl-4 whitespace-pre-wrap font-medium">
-                        {{ entry.text }}
+                        <span [innerHTML]="highlighter.highlightPython(entry.text)"></span>
                       </div>
                     }
                   </div>
                 }
 
-                <!-- Formatted Stdout with Syntax Highlighting -->
+                <!-- Formatted Stdout with Prism Syntax Highlighting -->
                 @if (executionResult()?.stdout) {
                   <div class="space-y-0.5 pt-1">
                     @for (line of getStdoutLines(); track $index) {
@@ -415,7 +547,7 @@ export interface TerminalEntry {
                       </button>
                     </div>
 
-                    <!-- Highlighted Traceback Lines -->
+                    <!-- Highlighted Traceback Lines with Prism formatting -->
                     <div class="font-mono text-xs space-y-1">
                       @for (tLine of getStderrLines(); track $index) {
                         <div class="flex items-start gap-2">
@@ -460,15 +592,19 @@ export interface TerminalEntry {
                       {{ err.message }}
                     </div>
 
+                    <!-- Prism-Highlighted Offending Code Snippet -->
                     @if (err.codeSnippet) {
-                      <div class="p-2.5 rounded-lg bg-black/60 border border-rose-900/60 font-mono text-xs text-rose-300">
-                        <span class="text-slate-500 select-none mr-2">{{ err.line ? err.line : '1' }} |</span>
-                        <span>{{ err.codeSnippet }}</span>
+                      <div class="p-3 rounded-lg bg-black/70 border border-rose-900/60 font-mono text-xs text-rose-300">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1 font-semibold">Failed Line:</div>
+                        <div class="flex items-start gap-2">
+                          <span class="text-slate-600 select-none">{{ err.line ? err.line : '1' }} |</span>
+                          <span [innerHTML]="highlighter.highlightPython(err.codeSnippet)"></span>
+                        </div>
                       </div>
                     }
                   </div>
 
-                  <!-- Diagnostic Insights -->
+                  <!-- Diagnostic Insights & Suggested Fix -->
                   <div class="space-y-3 text-xs">
                     <div class="p-3.5 rounded-xl bg-[#091217] border border-slate-800 space-y-1">
                       <div class="font-bold text-teal-400 flex items-center gap-1.5">
@@ -485,6 +621,28 @@ export interface TerminalEntry {
                       </div>
                       <p class="text-slate-300 leading-relaxed">{{ err.remediation }}</p>
                     </div>
+
+                    <!-- Recommended Python Fix Snippet with Prism Tokenization -->
+                    @if (err.suggestedFix) {
+                      <div class="p-3.5 rounded-xl bg-[#091217] border border-teal-500/30 space-y-2">
+                        <div class="flex items-center justify-between">
+                          <div class="font-bold text-teal-400 flex items-center gap-1.5 text-xs">
+                            <mat-icon class="text-sm">auto_fix_high</mat-icon>
+                            <span>Recommended Python Fix (Prism Highlighted)</span>
+                          </div>
+                          <button
+                            type="button"
+                            (click)="applySuggestedFix(err.suggestedFix)"
+                            class="px-2.5 py-1 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 font-bold text-xs flex items-center gap-1 transition-colors border border-teal-500/40">
+                            <mat-icon class="text-xs">content_paste_go</mat-icon>
+                            <span>Apply Fix to Editor</span>
+                          </button>
+                        </div>
+                        <div class="p-3 rounded-lg bg-[#05080A] border border-slate-800 font-mono text-xs overflow-x-auto text-slate-100">
+                          <pre class="m-0 p-0 leading-relaxed font-mono"><code class="language-python" [innerHTML]="highlighter.highlightPython(err.suggestedFix)"></code></pre>
+                        </div>
+                      </div>
+                    }
                   </div>
                 } @else {
                   <!-- No Error State -->
@@ -518,7 +676,7 @@ export interface TerminalEntry {
                       (click)="loadErrorPreset('zerodiv')"
                       class="p-2 text-left rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors">
                       <div class="font-bold text-rose-400">ZeroDivisionError</div>
-                      <div class="text-[10px] text-slate-400">Division by zero divisor</div>
+                      <div class="text-[10px] text-slate-400">Division / 0 at runtime</div>
                     </button>
 
                     <button
@@ -526,7 +684,7 @@ export interface TerminalEntry {
                       (click)="loadErrorPreset('name')"
                       class="p-2 text-left rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors">
                       <div class="font-bold text-rose-400">NameError</div>
-                      <div class="text-[10px] text-slate-400">Undefined variable reference</div>
+                      <div class="text-[10px] text-slate-400">Undefined variable access</div>
                     </button>
 
                     <button
@@ -534,61 +692,79 @@ export interface TerminalEntry {
                       (click)="loadErrorPreset('type')"
                       class="p-2 text-left rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors">
                       <div class="font-bold text-rose-400">TypeError</div>
-                      <div class="text-[10px] text-slate-400">Incompatible operand types</div>
+                      <div class="text-[10px] text-slate-400">Concatenating str + int</div>
                     </button>
                   </div>
                 </div>
               </div>
             }
 
-            <!-- Tab 3: Raw Text Console -->
+            <!-- Tab 3: Raw Unprocessed Output -->
             @if (activeTerminalTab() === 'raw') {
               <div
                 [class]="isTerminalMaximized() ? 'min-h-[500px] max-h-[640px]' : 'min-h-[340px] max-h-[460px]'"
-                class="p-4 font-mono text-xs text-slate-200 overflow-y-auto whitespace-pre-wrap leading-relaxed">
-                {{ getFullRawOutput() || '# No execution output logged yet.' }}
+                class="p-4 font-mono text-xs overflow-y-auto text-slate-300">
+                <pre class="whitespace-pre-wrap leading-relaxed">{{ getFullRawOutput() || 'No output recorded yet.' }}</pre>
               </div>
             }
 
-            <!-- Tab 4: Virtual File System (VFS) -->
+            <!-- Tab 4: Virtual Filesystem (VFS) Inspector -->
             @if (activeTerminalTab() === 'vfs') {
               <div
                 [class]="isTerminalMaximized() ? 'min-h-[500px] max-h-[640px]' : 'min-h-[340px] max-h-[460px]'"
-                class="p-4 overflow-y-auto space-y-3 font-mono text-xs">
-                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-                  <span class="text-teal-400 font-bold text-xs">VFS /workspace/ Files</span>
-                  <span class="text-[11px] text-slate-400">In-memory Python open() streams</span>
+                class="p-4 space-y-3 overflow-y-auto text-xs font-mono">
+                <div class="text-teal-400 font-bold pb-1 border-b border-slate-800 flex items-center gap-1.5">
+                  <mat-icon class="text-sm">folder_open</mat-icon>
+                  <span>Virtual Filesystem Tree (/home/pyadvance/workspace)</span>
                 </div>
 
-                <div class="space-y-2">
-                  @for (file of runner.getVirtualFilesList(); track file.name) {
-                    <div class="p-3 rounded-xl bg-[#091217] border border-slate-800 flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <mat-icon class="text-sm text-teal-400">description</mat-icon>
-                        <span class="text-slate-200 font-bold">{{ file.name }}</span>
-                      </div>
-                      <span class="text-[11px] text-slate-400 tabular-nums">{{ file.size }} bytes</span>
+                <div class="space-y-1.5">
+                  <div class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <mat-icon class="text-base text-teal-400">description</mat-icon>
+                      <span class="text-slate-200">main.py</span>
                     </div>
-                  }
+                    <span class="text-slate-500 text-[11px]">{{ currentCode.length }} bytes</span>
+                  </div>
+
+                  <div class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <mat-icon class="text-base text-slate-400">description</mat-icon>
+                      <span class="text-slate-200">sample.txt</span>
+                    </div>
+                    <span class="text-slate-500 text-[11px]">42 bytes (File I/O seek/tell demo)</span>
+                  </div>
+
+                  <div class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <mat-icon class="text-base text-amber-400">data_object</mat-icon>
+                      <span class="text-slate-200">config.json</span>
+                    </div>
+                    <span class="text-slate-500 text-[11px]">184 bytes (Security suite schema)</span>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-lg bg-[#081116] border border-teal-500/20 text-slate-400 text-[11px] leading-relaxed">
+                  Files written via <code class="text-teal-300">open("filename", "w")</code> exist inside this persistent in-browser filesystem sandbox.
                 </div>
               </div>
             }
 
-            <!-- Interactive Terminal REPL Prompt (>>>) Bar at bottom -->
-            <div class="p-2.5 bg-[#080E12] border-t border-slate-800/90 flex items-center gap-2">
-              <span class="text-teal-400 font-mono font-bold text-xs select-none">>>></span>
+            <!-- Bottom Interactive REPL Command Line Bar -->
+            <div class="p-2 bg-[#070C0F] border-t border-slate-800/80 flex items-center gap-2 font-mono text-xs">
+              <span class="text-teal-400 font-bold pl-2 select-none">&gt;&gt;&gt;</span>
               <input
                 type="text"
                 [(ngModel)]="replInput"
                 (keydown.enter)="onReplSubmit()"
-                placeholder="Type Python one-liner (e.g. 2**10, type(d), print('hi'))..."
-                class="flex-1 bg-transparent text-slate-100 font-mono text-xs focus:outline-none placeholder:text-slate-600" />
+                placeholder="Evaluate quick Python expression (e.g. 2**10, [x*2 for x in range(5)], len(...))"
+                class="flex-1 bg-transparent text-slate-200 focus:outline-none text-xs placeholder:text-slate-600 font-mono" />
               <button
                 type="button"
                 (click)="onReplSubmit()"
-                [disabled]="!replInput.trim()"
-                class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-30 text-white font-bold text-[11px] transition-colors">
-                Eval
+                class="px-2.5 py-1 rounded bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 font-semibold text-[11px] transition-colors border border-teal-500/30 flex items-center gap-1">
+                <span>Eval</span>
+                <mat-icon class="text-xs">keyboard_return</mat-icon>
               </button>
             </div>
           </div>
@@ -600,6 +776,7 @@ export interface TerminalEntry {
 export class PlaygroundComponent {
   readonly state = inject(LearningStateService);
   readonly runner = inject(PythonRunnerService);
+  readonly highlighter = inject(SyntaxHighlighter);
 
   readonly selectedSnippetKey = signal<string>('diamond-mro');
   readonly isRunning = signal<boolean>(false);
@@ -610,6 +787,9 @@ export class PlaygroundComponent {
   readonly wrapOutput = signal<boolean>(true);
   readonly isTerminalMaximized = signal<boolean>(false);
   readonly activeTerminalTab = signal<'terminal' | 'diagnostics' | 'raw' | 'vfs'>('terminal');
+
+  // Editor mode: 'edit' (writable with line numbers), 'preview' (Prism syntax view), 'split' (side by side)
+  readonly editorMode = signal<'edit' | 'preview' | 'split'>('edit');
 
   // Terminal interactive state
   replInput = '';
@@ -624,7 +804,14 @@ export class PlaygroundComponent {
 
   readonly activeLesson = this.state.activeLesson;
 
-  // Computed Parsed Error
+  /**
+   * Real-time Prism.js highlighted full code representation
+   */
+  readonly highlightedFullCode = computed<string>(() => {
+    return this.highlighter.highlightPython(this.currentCode);
+  });
+
+  // Computed Parsed Error with actionable suggested fixes
   readonly parsedError = computed<ParsedPythonError | null>(() => {
     const res = this.executionResult();
     if (!res || !res.stderr) return null;
@@ -650,7 +837,7 @@ export class PlaygroundComponent {
       }
     }
 
-    const { explanation, remediation } = this.getRemediationForError(errType);
+    const { explanation, remediation, suggestedFix } = this.getRemediationForError(errType);
 
     return {
       type: errType,
@@ -659,6 +846,7 @@ export class PlaygroundComponent {
       codeSnippet: snippet,
       explanation,
       remediation,
+      suggestedFix,
       rawTraceback: stderr
     };
   });
@@ -881,6 +1069,24 @@ print("Decoded String:", decoded_bytes.decode('utf-8'))`
     this.currentCode = this.presetMap['diamond-mro'].code;
   }
 
+  getCodeLineNumbers(): number[] {
+    const count = (this.currentCode.match(/\n/g) || []).length + 1;
+    return Array.from({ length: count }, (_, i) => i + 1);
+  }
+
+  handleTabKey(event: Event) {
+    event.preventDefault();
+    const textarea = event.target as HTMLTextAreaElement;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const spaces = '    ';
+    this.currentCode = this.currentCode.substring(0, start) + spaces + this.currentCode.substring(end);
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + 4;
+    }, 0);
+  }
+
   onSnippetChange(key: string) {
     this.selectedSnippetKey.set(key);
     const preset = this.presetMap[key];
@@ -998,6 +1204,14 @@ print("Decoded String:", decoded_bytes.decode('utf-8'))`
         this.currentCode = `# Intentional TypeError Demonstration\nport_prefix = "PORT_"\nport_number = 8080\n\n# Adding string directly to integer fails in Python:\nendpoint = port_prefix + port_number\nprint(endpoint)`;
         break;
     }
+    this.editorMode.set('edit');
+    this.executeCode();
+  }
+
+  applySuggestedFix(fixCode: string) {
+    if (!fixCode) return;
+    this.currentCode = fixCode;
+    this.editorMode.set('edit');
     this.executeCode();
   }
 
@@ -1022,70 +1236,25 @@ print("Decoded String:", decoded_bytes.decode('utf-8'))`
     return parts.join('\n');
   }
 
-  private escapeHtml(text: string): string {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
   /**
-   * Dedicated syntax highlighting parser for Python console output lines.
+   * Dedicated syntax highlighting parser for Python console output lines using Prism.js.
    */
   highlightOutputLine(line: string): string {
     if (!line) return '&nbsp;';
 
-    const escaped = this.escapeHtml(line);
-
     // 1. Python Section Banners e.g. "--- Running Unified Security Pipeline ---"
     if (/^\s*[-=]{3,}.*?[-=]{3,}\s*$/.test(line)) {
+      const escaped = this.highlighter.escapeHtml(line);
       return `<span class="text-teal-300 font-bold bg-teal-950/40 px-2 py-0.5 rounded border border-teal-500/20">${escaped}</span>`;
     }
 
     // 2. Python Object representations <__main__.Class object at 0x...>
-    let formatted = escaped.replace(
-      /(&lt;[a-zA-Z0-9_.]+\s+object\s+at\s+0x[0-9a-fA-F]+&gt;)/g,
-      '<span class="text-violet-300 font-semibold italic">$1</span>'
-    );
+    if (/^<[a-zA-Z0-9_.]+\s+object\s+at\s+0x[0-9a-fA-F]+>$/.test(line.trim())) {
+      return `<span class="text-violet-300 font-semibold italic">${this.highlighter.escapeHtml(line)}</span>`;
+    }
 
-    // 3. String literals '...' and "..."
-    formatted = formatted.replace(
-      /(&quot;.*?&quot;|'[^']*')/g,
-      '<span class="text-emerald-400 font-semibold">$1</span>'
-    );
-
-    // 4. Booleans (True, False) and None
-    formatted = formatted.replace(
-      /\b(True|False|None)\b/g,
-      '<span class="text-purple-400 font-bold">$1</span>'
-    );
-
-    // 5. Key-value labels e.g. "Role  :", "Full Dict:", "SHA-256 Digest:"
-    formatted = formatted.replace(
-      /^(\s*[A-Za-z0-9_.\- ]+)(\s*:\s*)/g,
-      '<span class="text-cyan-300 font-medium">$1</span><span class="text-slate-500">$2</span>'
-    );
-
-    // 6. SHA-256 / Hex hashes (32 to 64 hex characters)
-    formatted = formatted.replace(
-      /\b([0-9a-fA-F]{32,64})\b/g,
-      '<span class="text-teal-300 font-mono underline decoration-teal-500/30">$1</span>'
-    );
-
-    // 7. Numeric values (integers, floats, bytes count)
-    formatted = formatted.replace(
-      /(?<![a-zA-Z0-9_])(\d+(?:\.\d+)?)(?![a-zA-Z0-9_])/g,
-      '<span class="text-amber-400">$1</span>'
-    );
-
-    // 8. Positive and negative status badges
-    formatted = formatted.replace(
-      /\b(Resolved|Active|Passed|ALLOW|SUCCESS)\b/gi,
-      '<span class="text-emerald-400 font-bold">$1</span>'
-    );
-
-    return formatted;
+    // 3. Prism.js Python Tokenization for python data structures, dicts, arrays, values, and printouts
+    return this.highlighter.highlightPythonLine(line);
   }
 
   /**
@@ -1094,11 +1263,11 @@ print("Decoded String:", decoded_bytes.decode('utf-8'))`
   highlightTracebackLine(line: string): string {
     if (!line) return '&nbsp;';
 
-    const escaped = this.escapeHtml(line);
+    const escaped = this.highlighter.escapeHtml(line);
 
     // 1. Traceback header
     if (line.includes('Traceback (most recent call last):')) {
-      return `<span class="text-amber-400 font-bold flex items-center gap-1"><span class="text-rose-400">✕</span> ${escaped}</span>`;
+      return `<span class="text-amber-400 font-bold flex items-center gap-1.5"><span class="text-rose-400 font-extrabold">✕</span> ${escaped}</span>`;
     }
 
     // 2. File and Line location
@@ -1122,41 +1291,54 @@ print("Decoded String:", decoded_bytes.decode('utf-8'))`
       );
     }
 
-    // Code line inside traceback
+    // Code line inside traceback: highlight with Prism!
+    const leadingSpaces = line.match(/^\s*/)?.[0] || '';
+    const trimmed = line.trim();
+    if (trimmed) {
+      const codeHtml = this.highlighter.highlightPython(trimmed);
+      return `${leadingSpaces}<span class="pl-2 border-l-2 border-rose-500/40">${codeHtml}</span>`;
+    }
+
     return `<span class="text-slate-300 font-medium pl-2">${escaped}</span>`;
   }
 
-  private getRemediationForError(errorType: string): { explanation: string; remediation: string } {
+  private getRemediationForError(errorType: string): { explanation: string; remediation: string; suggestedFix?: string } {
     switch (errorType) {
       case 'SyntaxError':
         return {
           explanation: 'Python syntax violation. The parser encountered a token structure that breaks Python grammar rules.',
-          remediation: 'Check for unclosed parentheses (), unclosed string quotes, or missing colon (:) after def, class, if, for, while statements.'
+          remediation: 'Check for unclosed parentheses (), unclosed string quotes, or missing colon (:) after def, class, if, for, while statements.',
+          suggestedFix: `# Fixed SyntaxError with matching parenthesis and colon:\ndef validate_system():\n    print("System verified cleanly.")\n\nvalidate_system()`
         };
       case 'IndentationError':
         return {
           explanation: 'Mismatched block indentation. Python uses consistent 4-space whitespace rather than braces to define code blocks.',
-          remediation: 'Ensure all lines within your function, loop, or class block share identical 4-space indentations.'
+          remediation: 'Ensure all lines within your function, loop, or class block share identical 4-space indentations.',
+          suggestedFix: `# Fixed 4-space indentation:\ndef secure_endpoint():\n    status = "Active"\n    return status\n\nprint(secure_endpoint())`
         };
       case 'NameError':
         return {
           explanation: 'Referenced identifier not found in the local, enclosing, or global namespace.',
-          remediation: 'Verify that the variable or function name is declared before being referenced and check for typos or capitalization errors.'
+          remediation: 'Verify that the variable or function name is declared before being referenced and check for typos or capitalization errors.',
+          suggestedFix: `# Declare identifier before accessing:\nunregistered_credential = "SEC_AUTH_KEY_2026"\nprint("Accessing validated token:", unregistered_credential)`
         };
       case 'TypeError':
         return {
           explanation: 'Incompatible data types used in an operation or argument list.',
-          remediation: 'Convert data types explicitly before combining (e.g. use str(number) or f"{text}{number}" instead of direct addition).'
+          remediation: 'Convert data types explicitly before combining (e.g. use str(number) or f"{text}{number}" instead of direct addition).',
+          suggestedFix: `# Explicitly convert integer to string:\nport_prefix = "PORT_"\nport_number = 8080\nendpoint = port_prefix + str(port_number)\nprint("Clean endpoint:", endpoint)`
         };
       case 'ZeroDivisionError':
         return {
           explanation: 'Attempted mathematical division or modulo by zero.',
-          remediation: 'Add a check like "if divisor != 0:" before executing division or ensure the divisor variable is properly initialized.'
+          remediation: 'Add a check like "if divisor != 0:" before executing division or ensure the divisor variable is properly initialized.',
+          suggestedFix: `# Guarded division check:\ntotal_requests = 1000\nactive_servers = 0\nif active_servers > 0:\n    load_per_server = total_requests / active_servers\nelse:\n    load_per_server = 0\nprint("Safe Load calculation:", load_per_server)`
         };
       case 'FileNotFoundError':
         return {
           explanation: 'The requested file does not exist in the virtual filesystem.',
-          remediation: 'Inspect the VFS Files tab to verify existing files (sample.txt, config.txt, user.json) or open in write mode ("w") to create it.'
+          remediation: 'Inspect the VFS Files tab to verify existing files (sample.txt, config.json) or open in write mode ("w") to create it.',
+          suggestedFix: `# Create file in write mode before reading:\nwith open("sample.txt", "w") as f:\n    f.write("Cybersecurity Audit Passed\\n")\nwith open("sample.txt", "r") as f:\n    print(f.read())`
         };
       case 'AttributeError':
         return {
