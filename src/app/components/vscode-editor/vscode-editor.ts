@@ -48,6 +48,158 @@ export interface FolderNode {
   files: { path: string; name: string; size: number }[];
 }
 
+export type IdePaletteId =
+  | 'dracula'
+  | 'nord'
+  | 'github-dark'
+  | 'pyadvance-abyss'
+  | 'monokai-pro'
+  | 'solarized-dark';
+
+export interface IdeColorPalette {
+  id: IdePaletteId;
+  name: string;
+  tagline: string;
+  headerBg: string;
+  sidebarBg: string;
+  editorBg: string;
+  gutterBg: string;
+  terminalBg: string;
+  terminalHeaderBg: string;
+  statusBarBg: string;
+  border: string;
+  textPrimary: string;
+  textMuted: string;
+  accent: string;
+  accentSecondary: string;
+  runBtnBg: string;
+  runBtnText: string;
+  swatches: [string, string, string, string];
+}
+
+export const IDE_COLOR_PALETTES: IdeColorPalette[] = [
+  {
+    id: 'dracula',
+    name: 'Dracula',
+    tagline: 'High-contrast vampiric purple, pink & neon green',
+    headerBg: '#21222c',
+    sidebarBg: '#21222c',
+    editorBg: '#282a36',
+    gutterBg: '#21222c',
+    terminalBg: '#191a21',
+    terminalHeaderBg: '#21222c',
+    statusBarBg: '#191a21',
+    border: '#44475a',
+    textPrimary: '#f8f8f2',
+    textMuted: '#6272a4',
+    accent: '#bd93f9',
+    accentSecondary: '#ff79c6',
+    runBtnBg: '#50fa7b',
+    runBtnText: '#191a21',
+    swatches: ['#282a36', '#bd93f9', '#ff79c6', '#50fa7b'],
+  },
+  {
+    id: 'nord',
+    name: 'Nord',
+    tagline: 'Arctic polar night slate with frost cyan & aurora green',
+    headerBg: '#242933',
+    sidebarBg: '#242933',
+    editorBg: '#2e3440',
+    gutterBg: '#292e39',
+    terminalBg: '#1d212a',
+    terminalHeaderBg: '#242933',
+    statusBarBg: '#1d212a',
+    border: '#3b4252',
+    textPrimary: '#eceff4',
+    textMuted: '#7b88a1',
+    accent: '#88c0d0',
+    accentSecondary: '#81a1c1',
+    runBtnBg: '#a3be8c',
+    runBtnText: '#1d212a',
+    swatches: ['#2e3440', '#88c0d0', '#81a1c1', '#a3be8c'],
+  },
+  {
+    id: 'github-dark',
+    name: 'GitHub Dark',
+    tagline: 'Crisp carbon canvas with primer blue & coral accents',
+    headerBg: '#161b22',
+    sidebarBg: '#0d1117',
+    editorBg: '#0d1117',
+    gutterBg: '#090d12',
+    terminalBg: '#010409',
+    terminalHeaderBg: '#161b22',
+    statusBarBg: '#010409',
+    border: '#30363d',
+    textPrimary: '#e6edf3',
+    textMuted: '#7d8590',
+    accent: '#58a6ff',
+    accentSecondary: '#f78166',
+    runBtnBg: '#3fb950',
+    runBtnText: '#010409',
+    swatches: ['#0d1117', '#58a6ff', '#f78166', '#3fb950'],
+  },
+  {
+    id: 'pyadvance-abyss',
+    name: 'PyAdvance Abyss',
+    tagline: 'Deep oceanic cyber slate with teal & emerald highlights',
+    headerBg: '#0B151C',
+    sidebarBg: '#0A1319',
+    editorBg: '#050A0E',
+    gutterBg: '#070D12',
+    terminalBg: '#04080B',
+    terminalHeaderBg: '#091117',
+    statusBarBg: '#071016',
+    border: '#1e293b',
+    textPrimary: '#f1f5f9',
+    textMuted: '#64748b',
+    accent: '#2dd4bf',
+    accentSecondary: '#34d399',
+    runBtnBg: '#10b981',
+    runBtnText: '#022c22',
+    swatches: ['#050A0E', '#2dd4bf', '#34d399', '#f59e0b'],
+  },
+  {
+    id: 'monokai-pro',
+    name: 'Monokai Pro',
+    tagline: 'Warm charcoal studio with goldenrod, magenta & lime',
+    headerBg: '#221f22',
+    sidebarBg: '#221f22',
+    editorBg: '#2d2a2e',
+    gutterBg: '#262326',
+    terminalBg: '#19181a',
+    terminalHeaderBg: '#221f22',
+    statusBarBg: '#19181a',
+    border: '#403e41',
+    textPrimary: '#fcfcfa',
+    textMuted: '#939293',
+    accent: '#ffd866',
+    accentSecondary: '#ff6188',
+    runBtnBg: '#a9dc76',
+    runBtnText: '#19181a',
+    swatches: ['#2d2a2e', '#ffd866', '#ff6188', '#a9dc76'],
+  },
+  {
+    id: 'solarized-dark',
+    name: 'Solarized Dark',
+    tagline: 'Precision lab teal-blue balanced for zero eye fatigue',
+    headerBg: '#073642',
+    sidebarBg: '#00252e',
+    editorBg: '#002b36',
+    gutterBg: '#00212b',
+    terminalBg: '#001b24',
+    terminalHeaderBg: '#073642',
+    statusBarBg: '#001b24',
+    border: '#0d4a5a',
+    textPrimary: '#eee8d5',
+    textMuted: '#657b83',
+    accent: '#2aa198',
+    accentSecondary: '#b58900',
+    runBtnBg: '#859900',
+    runBtnText: '#001b24',
+    swatches: ['#002b36', '#2aa198', '#b58900', '#859900'],
+  },
+];
+
 const DEFAULT_PROJECTS: IdeProject[] = [
   {
     id: 'cyber-sec-suite',
@@ -268,9 +420,15 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
     '(window:mouseup)': 'onWindowMouseUp()',
   },
   template: `
-    <div class="h-screen w-screen overflow-hidden flex flex-col bg-[#080F14] text-slate-100 select-none font-sans">
+    <div
+      [style.background-color]="activePalette().editorBg"
+      [style.color]="activePalette().textPrimary"
+      class="h-screen w-screen overflow-hidden flex flex-col select-none font-sans transition-colors duration-150">
       <!-- ================= TOP FULL-FOCUS IDE BAR ================= -->
-      <header class="h-12 px-3 bg-[#0B151C] border-b border-slate-800/90 flex items-center justify-between gap-2 shrink-0 z-20">
+      <header
+        [style.background-color]="activePalette().headerBg"
+        [style.border-color]="activePalette().border"
+        class="h-12 px-3 border-b flex items-center justify-between gap-2 shrink-0 z-20 transition-colors duration-150">
         <!-- Zone 1: Back to Academy + Project Switcher -->
         <div class="flex items-center gap-2 min-w-0">
           <button
@@ -359,8 +517,37 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
           </button>
         </div>
 
-        <!-- Zone 3: Terminal Middle Toggle Button & Run Action -->
+        <!-- Zone 3: Color Palette Toggle, Terminal Middle Toggle & Run Action -->
         <div class="flex items-center gap-2 shrink-0">
+          <!-- COLOR PALETTE SELECTOR & STUDIO TOGGLE -->
+          <div
+            [style.background-color]="activePalette().editorBg"
+            [style.border-color]="activePalette().border"
+            class="flex items-center gap-1.5 px-2 py-1 rounded-lg border">
+            <button
+              type="button"
+              (click)="isPaletteModalOpen.set(true)"
+              title="Open Color Palette Studio (Alt+K)"
+              class="flex items-center gap-1 text-xs font-semibold hover:opacity-90 transition-opacity">
+              <mat-icon [style.color]="activePalette().accent" class="text-sm leading-none">palette</mat-icon>
+              <span class="hidden xl:flex items-center gap-0.5">
+                @for (dot of activePalette().swatches; track dot) {
+                  <span [style.background-color]="dot" class="w-2 h-2 rounded-full border border-white/20"></span>
+                }
+              </span>
+            </button>
+            <select
+              aria-label="Select IDE Color Palette"
+              [value]="activePaletteId()"
+              (change)="onPaletteSelectChange($event)"
+              [style.color]="activePalette().accent"
+              class="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer pr-1">
+              @for (pal of palettes; track pal.id) {
+                <option [value]="pal.id" class="bg-slate-900 text-slate-100">{{ pal.name }}</option>
+              }
+            </select>
+          </div>
+
           <!-- Mobile Python Path Button -->
           <button
             type="button"
@@ -376,12 +563,12 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
             type="button"
             (click)="toggleTerminalMiddleOrHidden()"
             title="Open Terminal to Middle of Page or Hide (Shortcut: Ctrl+&#96; or Ctrl+J)"
-            [class]="isTerminalOpen()
-              ? 'px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap'
-              : 'px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap'">
+            [style.border-color]="isTerminalOpen() ? activePalette().accent : activePalette().border"
+            [style.color]="isTerminalOpen() ? activePalette().accent : activePalette().textPrimary"
+            class="px-3 py-1.5 rounded-lg bg-black/25 hover:bg-black/40 border text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap">
             <mat-icon class="text-sm leading-none">{{ isTerminalOpen() ? 'terminal' : 'wysiwyg' }}</mat-icon>
             <span>{{ isTerminalOpen() ? 'Hide Terminal' : 'Terminal (Middle)' }}</span>
-            <kbd class="hidden xl:inline-block px-1 py-0.2 text-[10px] font-mono bg-slate-900/90 text-slate-300 rounded border border-slate-700">Ctrl+&#96;</kbd>
+            <kbd class="hidden xl:inline-block px-1 py-0.2 text-[10px] font-mono bg-black/40 text-slate-300 rounded border border-white/10">Ctrl+&#96;</kbd>
           </button>
 
           <!-- Run Active File Button -->
@@ -389,8 +576,10 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
             type="button"
             (click)="runActiveFile()"
             [disabled]="isRunning()"
+            [style.background-color]="activePalette().runBtnBg"
+            [style.color]="activePalette().runBtnText"
             title="Run active Python file using Local Python Path (Ctrl+Enter or F5)"
-            class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 whitespace-nowrap">
+            class="px-3.5 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-50 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 whitespace-nowrap">
             <mat-icon class="text-sm leading-none">{{ isRunning() ? 'hourglass_top' : 'play_arrow' }}</mat-icon>
             <span>{{ isRunning() ? 'Running...' : 'Run File' }}</span>
           </button>
@@ -401,7 +590,10 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
       <div class="flex-1 flex min-h-0 overflow-hidden">
         <!-- LEFT SIDEBAR: PROJECT FILES & FOLDERS EXPLORER -->
         @if (isExplorerOpen()) {
-          <aside class="w-64 sm:w-72 bg-[#0A1319] border-r border-slate-800/90 flex flex-col shrink-0 min-h-0">
+          <aside
+            [style.background-color]="activePalette().sidebarBg"
+            [style.border-color]="activePalette().border"
+            class="w-64 sm:w-72 border-r flex flex-col shrink-0 min-h-0 transition-colors duration-150">
             <!-- Explorer Header & File/Folder Creation Actions -->
             <div class="px-3 py-2.5 border-b border-slate-800/80 flex items-center justify-between">
               <div class="flex items-center gap-1.5 min-w-0">
@@ -692,7 +884,10 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
         <!-- CENTER COLUMN: REAL PYTHON EDITOR + MIDDLE-OF-PAGE / HIDDEN TERMINAL -->
         <div class="flex-1 flex flex-col min-w-0 min-h-0 relative">
           <!-- Open File Tabs Bar -->
-          <div class="h-10 bg-[#0A1218] border-b border-slate-800/90 flex items-center justify-between px-2 gap-2 shrink-0 overflow-x-auto">
+          <div
+            [style.background-color]="activePalette().headerBg"
+            [style.border-color]="activePalette().border"
+            class="h-10 border-b flex items-center justify-between px-2 gap-2 shrink-0 overflow-x-auto transition-colors duration-150">
             <div class="flex items-center gap-1 min-w-0 overflow-x-auto">
               @for (tabPath of openTabs(); track tabPath) {
                 <div
@@ -700,9 +895,12 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
                   role="button"
                   (click)="openFile(tabPath)"
                   (keydown.enter)="openFile(tabPath)"
+                  [style.background-color]="activeFilePath() === tabPath ? activePalette().editorBg : 'transparent'"
+                  [style.border-top-color]="activeFilePath() === tabPath ? activePalette().accentSecondary : 'transparent'"
+                  [style.color]="activeFilePath() === tabPath ? activePalette().accent : activePalette().textMuted"
                   [class]="activeFilePath() === tabPath
-                    ? 'group px-3 py-1.5 rounded-t-lg bg-[#050A0E] text-teal-300 border-t-2 border-teal-400 text-xs font-mono font-semibold flex items-center gap-2 cursor-pointer whitespace-nowrap'
-                    : 'group px-3 py-1.5 rounded-t-lg bg-[#0D171F]/60 hover:bg-[#0D171F] text-slate-400 hover:text-slate-200 text-xs font-mono flex items-center gap-2 cursor-pointer whitespace-nowrap'">
+                    ? 'group px-3 py-1.5 rounded-t-lg border-t-2 text-xs font-mono font-semibold flex items-center gap-2 cursor-pointer whitespace-nowrap'
+                    : 'group px-3 py-1.5 rounded-t-lg hover:bg-black/20 text-xs font-mono flex items-center gap-2 cursor-pointer whitespace-nowrap'">
                   <mat-icon [class]="getFileIconClass(tabPath)" class="text-xs leading-none">
                     {{ getFileIcon(tabPath) }}
                   </mat-icon>
@@ -765,13 +963,16 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
           </div>
 
           <!-- Breadcrumb & File Context Bar -->
-          <div class="h-7 px-4 bg-[#070D12] border-b border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+          <div
+            [style.background-color]="activePalette().gutterBg"
+            [style.border-color]="activePalette().border"
+            class="h-7 px-4 border-b flex items-center justify-between text-[11px] text-slate-400 shrink-0 transition-colors duration-150">
             <div class="flex items-center gap-1.5 font-mono truncate">
-              <span class="text-teal-400 font-semibold">{{ activeProject().name }}</span>
+              <span [style.color]="activePalette().accent" class="font-semibold">{{ activeProject().name }}</span>
               <span>/</span>
-              <span class="text-slate-200">{{ activeFilePath() }}</span>
+              <span [style.color]="activePalette().textPrimary">{{ activeFilePath() }}</span>
               @if (activeFilePath() === activeProject().entryFile) {
-                <span class="text-emerald-400 ml-2">· Entry Script</span>
+                <span [style.color]="activePalette().runBtnBg" class="ml-2">· Entry Script</span>
               }
             </div>
             <div class="flex items-center gap-3 font-mono text-[11px] shrink-0">
@@ -779,7 +980,8 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
                 <button
                   type="button"
                   (click)="setAsEntryFile(activeFilePath())"
-                  class="text-teal-400 hover:underline">
+                  [style.color]="activePalette().accent"
+                  class="hover:underline">
                   Set as Project Entry
                 </button>
               }
@@ -791,20 +993,27 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
           <!-- CODE EDITOR VIEWPORT (Takes 100% height when terminal is hidden, or top 50% when terminal opens to middle of page!) -->
           <div
             [style.height.%]="isTerminalOpen() ? 100 - terminalHeightPercent() : 100"
-            class="relative flex min-h-[120px] bg-[#050A0E] overflow-hidden">
+            [style.background-color]="activePalette().editorBg"
+            class="relative flex min-h-[120px] overflow-hidden transition-colors duration-150">
             <!-- Line Number Gutter -->
             <div
               #gutterRef
               [style.font-size.px]="state.editorFontSize()"
-              class="w-14 py-4 pr-3 bg-[#070D12] border-r border-slate-800/80 text-right font-mono text-slate-600 select-none overflow-hidden shrink-0 leading-[1.65]">
+              [style.background-color]="activePalette().gutterBg"
+              [style.border-color]="activePalette().border"
+              class="w-14 py-4 pr-3 border-r text-right font-mono select-none overflow-hidden shrink-0 leading-[1.65] transition-colors duration-150">
               @for (lineNum of editorLines(); track lineNum) {
                 <div
-                  [class]="errorLineNumber() === lineNum
-                    ? 'text-rose-400 font-bold bg-rose-950/60 pr-1 -mr-1 rounded'
+                  [style.color]="errorLineNumber() === lineNum
+                    ? '#fb7185'
                     : cursorLine() === lineNum
-                      ? 'text-teal-400 font-bold'
-                      : 'text-slate-600'"
-                  class="tabular-nums">
+                      ? activePalette().accent
+                      : activePalette().textMuted"
+                  [class]="errorLineNumber() === lineNum
+                    ? 'font-bold bg-rose-950/60 pr-1 -mr-1 rounded tabular-nums'
+                    : cursorLine() === lineNum
+                      ? 'font-bold tabular-nums'
+                      : 'tabular-nums'">
                   {{ lineNum }}
                 </div>
               }
@@ -825,7 +1034,9 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
               (keyup)="updateCursorMetrics()"
               (keydown)="onEditorKeydown($event)"
               [style.font-size.px]="state.editorFontSize()"
-              class="flex-1 h-full p-4 bg-transparent text-slate-100 font-mono leading-[1.65] focus:outline-none resize-none overflow-auto selection:bg-teal-500/30 whitespace-pre"
+              [style.color]="activePalette().textPrimary"
+              [style.caret-color]="activePalette().accentSecondary"
+              class="flex-1 h-full p-4 bg-transparent font-mono leading-[1.65] focus:outline-none resize-none overflow-auto selection:bg-teal-500/30 whitespace-pre"
               placeholder="# Write your Python code here..."></textarea>
           </div>
 
@@ -836,16 +1047,22 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
               (mousedown)="startResizingTerminal($event)"
               title="Drag to resize terminal or double-click to snap to Middle of Page (50%)"
               (dblclick)="snapTerminalToMiddle()"
-              class="h-1.5 bg-slate-800 hover:bg-teal-500 cursor-row-resize transition-colors shrink-0 flex items-center justify-center">
-              <div class="w-10 h-0.5 rounded bg-slate-500"></div>
+              [style.background-color]="activePalette().border"
+              class="h-1.5 hover:opacity-80 cursor-row-resize transition-colors shrink-0 flex items-center justify-center">
+              <div [style.background-color]="activePalette().accent" class="w-10 h-0.5 rounded"></div>
             </div>
 
             <section
               [style.height.%]="terminalHeightPercent()"
+              [style.background-color]="activePalette().terminalBg"
+              [style.border-color]="activePalette().border"
               aria-label="Integrated Python Terminal"
-              class="bg-[#04080B] border-t border-slate-800 flex flex-col min-h-[140px] shrink-0 z-10">
+              class="border-t flex flex-col min-h-[140px] shrink-0 z-10 transition-colors duration-150">
               <!-- Terminal Header Bar -->
-              <div class="h-9 px-3 bg-[#091117] border-b border-slate-800/90 flex items-center justify-between gap-2 text-xs shrink-0">
+              <div
+                [style.background-color]="activePalette().terminalHeaderBg"
+                [style.border-color]="activePalette().border"
+                class="h-9 px-3 border-b flex items-center justify-between gap-2 text-xs shrink-0 transition-colors duration-150">
                 <!-- Left: Terminal Tabs -->
                 <div class="flex items-center gap-1.5">
                   <button
@@ -1059,12 +1276,16 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
       </div>
 
       <!-- ================= BOTTOM IDE STATUS BAR ================= -->
-      <footer class="h-7 px-3 bg-[#071016] border-t border-slate-800/90 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+      <footer
+        [style.background-color]="activePalette().statusBarBg"
+        [style.border-color]="activePalette().border"
+        class="h-7 px-3 border-t flex items-center justify-between text-[11px] text-slate-400 shrink-0 transition-colors duration-150">
         <div class="flex items-center gap-3 min-w-0">
           <button
             type="button"
             (click)="isPathModalOpen.set(true)"
-            class="flex items-center gap-1.5 text-emerald-400 hover:underline font-mono truncate">
+            [style.color]="activePalette().runBtnBg"
+            class="flex items-center gap-1.5 hover:underline font-mono truncate">
             <mat-icon class="text-xs leading-none">memory</mat-icon>
             <span>{{ localPythonPath() }}</span>
             @if (pythonPathVerifiedInfo(); as info) {
@@ -1072,22 +1293,117 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
             }
           </button>
           <span class="hidden sm:inline">·</span>
-          <span class="hidden sm:inline font-mono truncate">Project: {{ activeProject().name }} ({{ totalProjectFilesCount() }} files)</span>
+          <button
+            type="button"
+            (click)="cycleColorPalette()"
+            title="Click to cycle IDE Color Palette or press Alt+K"
+            [style.color]="activePalette().accent"
+            class="flex items-center gap-1 font-mono hover:underline truncate">
+            <mat-icon class="text-xs leading-none">palette</mat-icon>
+            <span>Theme: {{ activePalette().name }}</span>
+          </button>
+          <span class="hidden md:inline">·</span>
+          <span class="hidden md:inline font-mono truncate">Project: {{ activeProject().name }} ({{ totalProjectFilesCount() }} files)</span>
         </div>
 
         <div class="flex items-center gap-3 shrink-0">
-          <span class="hidden md:inline font-mono text-[10px] text-slate-500">
-            Shortcuts: <kbd class="text-slate-300">Ctrl+Enter</kbd> Run · <kbd class="text-slate-300">Ctrl+&#96;</kbd> or <kbd class="text-slate-300">Ctrl+J</kbd> Terminal Middle/Hide · <kbd class="text-slate-300">Ctrl+B</kbd> Explorer
+          <span class="hidden lg:inline font-mono text-[10px] text-slate-500">
+            Shortcuts: <kbd class="text-slate-300">Ctrl+Enter</kbd> Run · <kbd class="text-slate-300">Ctrl+&#96;</kbd> Terminal Middle/Hide · <kbd class="text-slate-300">Alt+K</kbd> Palette
           </span>
           <button
             type="button"
             (click)="toggleTerminalMiddleOrHidden()"
-            class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-teal-300 font-semibold flex items-center gap-1">
+            [style.color]="activePalette().accent"
+            class="px-2 py-0.5 rounded bg-black/30 hover:bg-black/50 font-semibold flex items-center gap-1">
             <mat-icon class="text-xs leading-none">terminal</mat-icon>
             <span>{{ isTerminalOpen() ? 'Terminal: Middle (' + terminalHeightPercent() + '%)' : 'Terminal: Hidden' }}</span>
           </button>
         </div>
       </footer>
+
+      <!-- ================= MODAL 0: COLOR PALETTE CUSTOMIZER STUDIO ================= -->
+      @if (isPaletteModalOpen()) {
+        <div class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            [style.background-color]="activePalette().headerBg"
+            [style.border-color]="activePalette().border"
+            class="border rounded-2xl max-w-xl w-full p-5 space-y-4 shadow-2xl">
+            <div
+              [style.border-color]="activePalette().border"
+              class="flex items-center justify-between border-b pb-3">
+              <div class="flex items-center gap-2">
+                <mat-icon [style.color]="activePalette().accent">palette</mat-icon>
+                <div>
+                  <h3 class="text-base font-bold text-white">Real Python Coder · Color Palette Studio</h3>
+                  <p class="text-[11px] text-slate-400">Customize editor, gutter, explorer, and terminal surfaces (Shortcut: Alt+K)</p>
+                </div>
+              </div>
+              <button type="button" (click)="isPaletteModalOpen.set(false)" class="text-slate-400 hover:text-white">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              @for (pal of palettes; track pal.id) {
+                <button
+                  type="button"
+                  (click)="selectColorPalette(pal.id)"
+                  [style.background-color]="pal.editorBg"
+                  [style.border-color]="activePaletteId() === pal.id ? pal.accent : pal.border"
+                  class="p-3.5 rounded-xl border-2 text-left transition-all hover:scale-[1.01] flex flex-col justify-between gap-2.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <span [style.color]="pal.textPrimary" class="text-xs font-bold flex items-center gap-1.5">
+                      <span>{{ pal.name }}</span>
+                      @if (activePaletteId() === pal.id) {
+                        <mat-icon [style.color]="pal.runBtnBg" class="text-sm leading-none">check_circle</mat-icon>
+                      }
+                    </span>
+                    <div class="flex items-center gap-1">
+                      @for (hex of pal.swatches; track hex) {
+                        <span
+                          [style.background-color]="hex"
+                          class="w-3.5 h-3.5 rounded-full border border-white/20"></span>
+                      }
+                    </div>
+                  </div>
+
+                  <p [style.color]="pal.textMuted" class="text-[11px] leading-snug">
+                    {{ pal.tagline }}
+                  </p>
+
+                  <!-- Mini Code Preview Strip -->
+                  <div
+                    [style.background-color]="pal.terminalBg"
+                    [style.border-color]="pal.border"
+                    class="px-2.5 py-1.5 rounded-lg border font-mono text-[10px] flex items-center justify-between">
+                    <span>
+                      <span [style.color]="pal.accentSecondary">def</span>
+                      <span [style.color]="pal.accent"> audit</span>
+                      <span [style.color]="pal.textPrimary">(host):</span>
+                    </span>
+                    <span [style.color]="pal.runBtnBg">return True</span>
+                  </div>
+                </button>
+              }
+            </div>
+
+            <div
+              [style.border-color]="activePalette().border"
+              class="flex items-center justify-between pt-3 border-t text-xs">
+              <span class="text-slate-400 font-mono text-[11px]">
+                Active: <strong [style.color]="activePalette().accent">{{ activePalette().name }}</strong>
+              </span>
+              <button
+                type="button"
+                (click)="isPaletteModalOpen.set(false)"
+                [style.background-color]="activePalette().accent"
+                class="px-5 py-2 rounded-xl text-slate-950 font-bold text-xs">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      }
 
       <!-- ================= MODAL 1: CREATE NEW PROJECT ================= -->
       @if (isNewProjectModalOpen()) {
@@ -1296,6 +1612,15 @@ export class VscodeEditorComponent implements OnInit {
   readonly terminalHeightPercent = signal<number>(50);
   readonly activeTerminalTab = signal<'console' | 'repl' | 'problems'>('console');
   private isResizingTerminal = false;
+
+  // Color Palette Theme state (Dracula, Nord, GitHub Dark, PyAdvance Abyss, Monokai Pro, Solarized Dark)
+  readonly palettes = IDE_COLOR_PALETTES;
+  readonly activePaletteId = signal<IdePaletteId>('dracula');
+  readonly isPaletteModalOpen = signal<boolean>(false);
+  readonly activePalette = computed<IdeColorPalette>(() => {
+    const id = this.activePaletteId();
+    return this.palettes.find((p) => p.id === id) || this.palettes[0];
+  });
 
   // Local Python Path state
   readonly localPythonPath = this.state.localPythonPath;
@@ -1517,7 +1842,30 @@ export class VscodeEditorComponent implements OnInit {
       event.preventDefault();
       this.isExplorerOpen.set(true);
       this.startCreatingItem('folder', this.selectedFolderTarget());
+      return;
     }
+
+    // Alt+K -> Open Color Palette Studio Modal
+    if (event.altKey && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.isPaletteModalOpen.update((v) => !v);
+    }
+  }
+
+  onPaletteSelectChange(event: Event) {
+    const id = (event.target as HTMLSelectElement).value as IdePaletteId;
+    this.selectColorPalette(id);
+  }
+
+  selectColorPalette(id: IdePaletteId) {
+    this.activePaletteId.set(id);
+    this.saveWorkspaceToStorage();
+  }
+
+  cycleColorPalette() {
+    const idx = this.palettes.findIndex((p) => p.id === this.activePaletteId());
+    const next = this.palettes[(idx + 1) % this.palettes.length];
+    this.selectColorPalette(next.id);
   }
 
   startResizingTerminal(event: MouseEvent) {
@@ -2272,6 +2620,7 @@ if __name__ == "__main__":
           projects: this.projects(),
           activeProjectId: this.activeProjectId(),
           localPythonPath: this.localPythonPath(),
+          activePaletteId: this.activePaletteId(),
         }),
       );
     } catch {
@@ -2293,6 +2642,9 @@ if __name__ == "__main__":
       }
       if (parsed.localPythonPath) {
         this.localPythonPath.set(parsed.localPythonPath);
+      }
+      if (parsed.activePaletteId && this.palettes.some((p) => p.id === parsed.activePaletteId)) {
+        this.activePaletteId.set(parsed.activePaletteId);
       }
     } catch {
       // Ignore corrupted storage
