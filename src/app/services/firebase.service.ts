@@ -9,6 +9,7 @@ import {
   User
 } from 'firebase/auth';
 import {
+  initializeFirestore,
   getFirestore,
   doc,
   setDoc,
@@ -56,7 +57,15 @@ export interface FirebaseModuleProgress {
 }
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-export const db: Firestore = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db: Firestore = (() => {
+  try {
+    return initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true
+    }, firebaseConfig.firestoreDatabaseId);
+  } catch {
+    return getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  }
+})();
 export const auth = getAuth(app);
 
 @Injectable({

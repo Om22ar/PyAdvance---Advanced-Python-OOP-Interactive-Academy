@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LearningStateService } from '../../services/learning-state.service';
 import { SyntaxHighlighter } from '../../services/syntax-highlighter';
+import { PdfAnnotationManager, AnnotationColor, PdfAnnotation } from '../../services/pdf-annotation-manager';
+import { buildFunctionsAndDataStructuresPdfBase64, FUNCTIONS_AND_DATA_STRUCTURES_MARKDOWN } from '../../data/functions-data-structures-lecture.data';
 import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import { inflate } from 'pako';
 
@@ -31,6 +33,25 @@ const SAMPLE_ACADEMIC_PDF_B64 =
 
 const INITIAL_ACADEMIC_LECTURES: StudyDocument[] = [
   {
+    id: 'lecture-functions-data-structures-pdf',
+    title: 'Lecture Slides (PDF): Python Functions & Data Structures (44 Slides)',
+    fileName: 'python_functions_and_data_structures_sondos_saif.pdf',
+    category: 'Academic Lecture',
+    fileType: 'pdf',
+    uploadedAt: '2026-10-02',
+    isCustom: false,
+    author: 'T\\ Sondos Saif (Course Instructor)',
+    sizeBytes: 52400,
+    summary: 'Complete 44-slide academic slide deck by T\\ Sondos Saif covering Python Basics, Variables, Types, I/O, Conditionals, Loops, Functions, *args/**kwargs, and Built-in Data Structures (Lists, Tuples, Sets, Dictionaries).',
+    keyTakeaways: [
+      'Full 44-page academic slide presentation rendered in high-DPI in-canvas PDF.js with annotations.',
+      'Comprehensive parameter breakdown: Positional, Keyword, Default, *args (tuple pack), and **kwargs (dict pack).',
+      'In-depth study of Lists (CRUD, slicing, 2D matrix, comprehensions), Tuples (immutability), Sets (set math | & -), and Dictionaries (.get, .items, .update).',
+      'Complete Data Structure Comparison Matrix comparing ordering, mutability, duplicate tolerance, indexing, and hashability.'
+    ],
+    content: buildFunctionsAndDataStructuresPdfBase64()
+  },
+  {
     id: 'lecture-00-pdf-slides',
     title: 'Lecture Slides (PDF): Advanced Python & Cybersecurity OOP Syllabus',
     fileName: 'sondos_saif_advanced_python_slides.pdf',
@@ -47,6 +68,25 @@ const INITIAL_ACADEMIC_LECTURES: StudyDocument[] = [
       'Triple view mode: High-Res Canvas Reader, Extracted Searchable Text, and Stream Forensics.'
     ],
     content: SAMPLE_ACADEMIC_PDF_B64
+  },
+  {
+    id: 'lecture-02-functions-data-structures-notes',
+    title: 'Lecture Notes (MD): Python Functions & Data Structures Study Guide',
+    fileName: 'functions_and_data_structures_study_guide.md',
+    category: 'Notes',
+    fileType: 'markdown',
+    uploadedAt: '2026-10-02',
+    isCustom: false,
+    author: 'T\\ Sondos Saif (Course Instructor)',
+    sizeBytes: 18500,
+    summary: 'Structured academic study guide and code reference corresponding to all 44 slides of T\\ Sondos Saif\'s Python Functions and Data Structures lecture.',
+    keyTakeaways: [
+      'Detailed summaries of Variables, Types, Output/Input, and Conditional branches.',
+      'Variable-Length parameter architecture with *args and **kwargs combined recipes.',
+      'Complete CRUD method reference for Lists, Tuples, Sets, and Dictionaries.',
+      'Summary Decision Matrix and Comparison Table.'
+    ],
+    content: FUNCTIONS_AND_DATA_STRUCTURES_MARKDOWN
   },
   {
     id: 'lecture-01-c3-mro',
@@ -848,9 +888,106 @@ if __name__ == "__main__":
                 </div>
               </div>
 
+              <!-- FLOATING ANNOTATION TOOLBAR (Floating Pill on top of PDF Canvas View) -->
+              @if (isPdfDoc() && pdfViewMode() === 'canvas' && !pdfRenderError()) {
+                <div class="sticky top-2 z-30 flex justify-center w-full pointer-events-none pb-2">
+                  <div class="pointer-events-auto bg-[#070D11]/90 backdrop-blur-md border border-slate-700/80 shadow-2xl rounded-2xl p-1.5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs font-mono transition-all">
+                    
+                    <!-- Toolbar Indicator -->
+                    <div class="flex items-center gap-1 pl-1.5 pr-1 text-slate-400">
+                      <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                      <span class="text-[10px] uppercase font-bold text-slate-300 hidden md:inline">Annotate</span>
+                    </div>
+
+                    <!-- Tool 1: Pan / Navigate -->
+                    <button
+                      type="button"
+                      (click)="annMgr.setTool('view')"
+                      [class]="annMgr.activeTool() === 'view'
+                        ? 'px-2.5 py-1 rounded-xl bg-teal-600 text-white font-bold shadow-xs'
+                        : 'px-2.5 py-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300'"
+                      title="Pan / Navigate Document (V)">
+                      <mat-icon class="text-xs mr-0.5 align-middle">pan_tool</mat-icon>
+                      <span>Pan</span>
+                    </button>
+
+                    <!-- Tool 2: Highlight Text -->
+                    <button
+                      type="button"
+                      (click)="annMgr.setTool('highlight')"
+                      [class]="annMgr.activeTool() === 'highlight'
+                        ? 'px-2.5 py-1 rounded-xl bg-amber-500 text-white font-bold shadow-xs'
+                        : 'px-2.5 py-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300'"
+                      title="Highlight Text / Areas on PDF (H)">
+                      <mat-icon class="text-xs mr-0.5 align-middle">border_color</mat-icon>
+                      <span>Highlight</span>
+                    </button>
+
+                    <!-- Tool 3: Sticky Note -->
+                    <button
+                      type="button"
+                      (click)="annMgr.setTool('note')"
+                      [class]="annMgr.activeTool() === 'note'
+                        ? 'px-2.5 py-1 rounded-xl bg-purple-600 text-white font-bold shadow-xs'
+                        : 'px-2.5 py-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300'"
+                      title="Click canvas to place a Sticky Note (N)">
+                      <mat-icon class="text-xs mr-0.5 align-middle">sticky_note_2</mat-icon>
+                      <span>Sticky Note</span>
+                    </button>
+
+                    <!-- Quick Drop Sticky Note Button -->
+                    <button
+                      type="button"
+                      (click)="quickDropStickyNote()"
+                      title="Drop Sticky Note on current page center"
+                      class="px-2 py-1 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-500/40 text-[11px] font-semibold flex items-center gap-1 transition-colors">
+                      <mat-icon class="text-xs">add_comment</mat-icon>
+                      <span class="hidden sm:inline">+ Drop Note</span>
+                    </button>
+
+                    <!-- Tool 4: Eraser -->
+                    <button
+                      type="button"
+                      (click)="annMgr.setTool('eraser')"
+                      [class]="annMgr.activeTool() === 'eraser'
+                        ? 'px-2.5 py-1 rounded-xl bg-rose-600 text-white font-bold shadow-xs'
+                        : 'px-2.5 py-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300'"
+                      title="Click any annotation to erase (E)">
+                      <mat-icon class="text-xs mr-0.5 align-middle">auto_fix_normal</mat-icon>
+                      <span>Eraser</span>
+                    </button>
+
+                    <!-- Color Palette Selector -->
+                    <div class="flex items-center gap-1.5 px-2 border-l border-r border-slate-800">
+                      @for (c of annMgr.colors; track c.name) {
+                        <button
+                          type="button"
+                          (click)="annMgr.setColor(c.name)"
+                          [style.background-color]="c.hex"
+                          [class]="annMgr.activeColor() === c.name ? 'ring-2 ring-white scale-125' : 'opacity-70 hover:opacity-100'"
+                          class="w-4 h-4 rounded-full transition-all shadow-xs cursor-pointer"
+                          [title]="'Set color: ' + c.label"></button>
+                      }
+                    </div>
+
+                    <!-- Notes Drawer Toggle -->
+                    <button
+                      type="button"
+                      (click)="annMgr.toggleDrawer()"
+                      [class]="annMgr.isDrawerOpen()
+                        ? 'px-2.5 py-1 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/50 font-bold'
+                        : 'px-2.5 py-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300'"
+                      title="View all notes & highlights in Drawer">
+                      <mat-icon class="text-xs mr-1 align-middle">speaker_notes</mat-icon>
+                      <span>Notes ({{ docAnnotations().length }})</span>
+                    </button>
+                  </div>
+                </div>
+              }
+
               <!-- VIEW 1: High-DPI In-Canvas Visual PDF Viewer -->
               @if (pdfViewMode() === 'canvas') {
-                <div class="w-full flex flex-col items-center justify-center p-4 sm:p-8 bg-[#181A1B] rounded-2xl border border-slate-800 shadow-2xl min-h-[560px] overflow-auto">
+                <div class="w-full flex flex-col items-center justify-center px-[9px] py-[10px] bg-[#181A1B] rounded-[13px] border-0 border-solid shadow-2xl min-h-[560px] overflow-auto">
                   @if (isPdfLoading()) {
                     <div class="flex items-center gap-2 text-teal-400 font-mono text-xs py-6">
                       <mat-icon class="text-base animate-spin">refresh</mat-icon>
@@ -961,10 +1098,255 @@ if __name__ == "__main__":
                   }
 
                   <!-- The HTML5 Canvas rendered directly by PDF.js (NO CHROME IFRAME BLOCKS!) -->
-                  <div [class.hidden]="!!pdfRenderError()" class="relative max-w-full overflow-auto rounded-lg shadow-2xl bg-white dark:bg-[#1E1E1E] transition-all">
+                  <div [class.hidden]="!!pdfRenderError()" class="relative max-w-full overflow-auto rounded-lg shadow-2xl bg-white dark:bg-[#1E1E1E] transition-all group">
                     <canvas #pdfCanvas class="block mx-auto max-w-full"></canvas>
+
+                    <!-- Interactive Annotation Overlay Layer (Synced to Canvas Coordinates) -->
+                    <div
+                      #annotationOverlay
+                      (mousedown)="onOverlayMouseDown($event)"
+                      (mousemove)="onOverlayMouseMove($event)"
+                      (mouseup)="onOverlayMouseUp()"
+                      [class]="annMgr.getOverlayCursorClass()"
+                      class="absolute inset-0 z-10 select-none overflow-hidden">
+                      
+                      <!-- 1. Highlight Annotations on Current Page -->
+                      @for (ann of currentPageAnnotations(); track ann.id) {
+                        @if (ann.type === 'highlight') {
+                          <button
+                            type="button"
+                            (click)="onAnnotationClick($event, ann)"
+                            [style.left.%]="ann.xPct"
+                            [style.top.%]="ann.yPct"
+                            [style.width.%]="ann.widthPct || 20"
+                            [style.height.%]="ann.heightPct || 4"
+                            [style.background-color]="annMgr.getHighlightBgColor(ann.color)"
+                            [style.border-color]="annMgr.getHighlightBorderColor(ann.color)"
+                            class="absolute border-2 rounded cursor-pointer transition-all hover:ring-2 hover:ring-white/80 group/hl text-left p-0">
+                            @if (ann.text) {
+                              <span class="hidden group-hover/hl:block absolute -top-8 left-0 px-2 py-1 bg-slate-900 text-white text-[10px] font-mono rounded shadow-lg whitespace-nowrap z-30 pointer-events-none">
+                                {{ ann.text }}
+                              </span>
+                            }
+                            @if (annMgr.activeTool() === 'eraser') {
+                              <span class="absolute inset-0 flex items-center justify-center bg-rose-500/30 text-rose-200">
+                                <mat-icon class="text-xs">delete</mat-icon>
+                              </span>
+                            }
+                          </button>
+                        }
+                      }
+
+                      <!-- 2. Sticky Note Annotations on Current Page -->
+                      @for (ann of currentPageAnnotations(); track ann.id) {
+                        @if (ann.type === 'sticky_note') {
+                          <div
+                            [style.left.%]="ann.xPct"
+                            [style.top.%]="ann.yPct"
+                            class="absolute z-20 -translate-x-3.5 -translate-y-3.5">
+                            
+                            <!-- Note Pin / Badge Button -->
+                            <button
+                              type="button"
+                              (click)="toggleAnnotationCard($event, ann)"
+                              [class]="annMgr.getStickyNotePinClasses(ann.color)"
+                              class="w-7 h-7 rounded-full shadow-lg flex items-center justify-center text-slate-900 transition-transform hover:scale-110 active:scale-95 border-2 border-white dark:border-slate-900 cursor-pointer"
+                              [title]="ann.text || 'Sticky Note (Click to view)'">
+                              <mat-icon class="text-sm leading-none font-bold">sticky_note_2</mat-icon>
+                            </button>
+
+                            <!-- Expanded Note Card Popover -->
+                            @if (ann.isOpen) {
+                              <div
+                                (mousedown)="$event.stopPropagation()"
+                                class="absolute left-8 -top-2 w-64 sm:w-72 rounded-xl bg-white dark:bg-[#101B22] border-2 shadow-2xl p-3 space-y-2 z-40 text-xs font-sans animate-in fade-in zoom-in-95 text-slate-900 dark:text-slate-100"
+                                [style.border-color]="annMgr.getStickyNoteBorderColor(ann.color)">
+                                <!-- Note Header -->
+                                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                                  <div class="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                                    <span class="w-2.5 h-2.5 rounded-full" [style.background-color]="annMgr.getHighlightBorderColor(ann.color)"></span>
+                                    <span>Sticky Note &bull; P. {{ ann.pageNumber }}</span>
+                                  </div>
+                                  <div class="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      (click)="deleteAnnotation(ann.id)"
+                                      title="Delete Note"
+                                      class="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">
+                                      <mat-icon class="text-xs">delete</mat-icon>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      (click)="closeAnnotationCard(ann)"
+                                      title="Close Note"
+                                      class="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                      <mat-icon class="text-xs">close</mat-icon>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <!-- Note Textarea -->
+                                <textarea
+                                  [(ngModel)]="ann.text"
+                                  (ngModelChange)="annMgr.updateAnnotation(ann.id, { text: ann.text })"
+                                  placeholder="Write your note or key insight..."
+                                  rows="3"
+                                  class="w-full p-2 rounded-lg bg-slate-50 dark:bg-[#070D11] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:outline-teal-500 resize-none font-mono"></textarea>
+
+                                <!-- Note Color Palette & Timestamp -->
+                                <div class="flex items-center justify-between pt-1 text-[10px] text-slate-400">
+                                  <div class="flex items-center gap-1">
+                                    @for (c of annMgr.colors; track c.name) {
+                                      <button
+                                        type="button"
+                                        (click)="setAnnotationColor(ann, c.name)"
+                                        [style.background-color]="c.hex"
+                                        [class]="ann.color === c.name ? 'ring-2 ring-slate-900 dark:ring-white scale-110' : 'opacity-70 hover:opacity-100'"
+                                        class="w-3.5 h-3.5 rounded-full transition-all cursor-pointer"
+                                        [title]="c.label"></button>
+                                    }
+                                  </div>
+                                  <span class="font-mono text-[9px]">{{ ann.createdAt }}</span>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      }
+
+                      <!-- Drag Highlight Box Preview -->
+                      @if (annMgr.isDraggingHighlight() && annMgr.currentDragRect()) {
+                        <div
+                          [style.left.%]="annMgr.currentDragRect()!.xPct"
+                          [style.top.%]="annMgr.currentDragRect()!.yPct"
+                          [style.width.%]="annMgr.currentDragRect()!.widthPct"
+                          [style.height.%]="annMgr.currentDragRect()!.heightPct"
+                          [style.background-color]="annMgr.getHighlightBgColor(annMgr.activeColor())"
+                          [style.border-color]="annMgr.getHighlightBorderColor(annMgr.activeColor())"
+                          class="absolute border-2 border-dashed rounded pointer-events-none z-30 animate-pulse"></div>
+                      }
+                    </div>
                   </div>
                 </div>
+
+                <!-- Document Annotations & Study Notes Drawer (Collapsible) -->
+                @if (annMgr.isDrawerOpen()) {
+                  <div class="w-full bg-[#091015] border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-xl animate-in fade-in">
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                      <div class="flex items-center gap-2">
+                        <mat-icon class="text-teal-400">speaker_notes</mat-icon>
+                        <div>
+                          <h3 class="font-bold text-sm text-white">Lecture Notes &amp; Highlights</h3>
+                          <p class="text-[11px] text-slate-400 font-mono">
+                            {{ docAnnotations().length }} annotations saved in localStorage
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="flex flex-wrap items-center gap-2">
+                        <!-- Filter: Current Page vs All Pages -->
+                        <div class="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800 text-[11px] font-mono">
+                          <button
+                            type="button"
+                            (click)="annMgr.filterMode.set('page')"
+                            [class]="annMgr.filterMode() === 'page'
+                              ? 'px-2.5 py-0.5 rounded-md bg-teal-600 text-white font-bold'
+                              : 'px-2.5 py-0.5 text-slate-400 hover:text-white'">
+                            This Page (P. {{ pdfCurrentPage() }})
+                          </button>
+                          <button
+                            type="button"
+                            (click)="annMgr.filterMode.set('all')"
+                            [class]="annMgr.filterMode() === 'all'
+                              ? 'px-2.5 py-0.5 rounded-md bg-purple-600 text-white font-bold'
+                              : 'px-2.5 py-0.5 text-slate-400 hover:text-white'">
+                            All Pages ({{ docAnnotations().length }})
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          (click)="exportAnnotationsAsMarkdown()"
+                          class="px-2.5 py-1 rounded-lg bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/40 text-xs font-semibold flex items-center gap-1">
+                          <mat-icon class="text-xs">content_copy</mat-icon>
+                          <span>Copy Notes</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="clearDocumentAnnotations()"
+                          class="px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/40 text-xs font-semibold flex items-center gap-1">
+                          <mat-icon class="text-xs">delete_sweep</mat-icon>
+                          <span>Clear</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Notes List Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-1">
+                      @for (ann of (annMgr.filterMode() === 'page' ? currentPageAnnotations() : docAnnotations()); track ann.id) {
+                        <div
+                          class="p-3 rounded-xl bg-[#060B0E] border-2 space-y-2 text-xs flex flex-col justify-between transition-all"
+                          [style.border-color]="annMgr.getStickyNoteBorderColor(ann.color)">
+                          <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                              <button
+                                type="button"
+                                (click)="jumpToAnnotationPage(ann.pageNumber)"
+                                class="font-bold text-[11px] text-teal-400 hover:underline flex items-center gap-1">
+                                <mat-icon class="text-xs">{{ ann.type === 'sticky_note' ? 'sticky_note_2' : 'border_color' }}</mat-icon>
+                                <span>Page {{ ann.pageNumber }}</span>
+                              </button>
+                              <span class="text-[10px] text-slate-500 font-mono">{{ ann.createdAt }}</span>
+                            </div>
+
+                            <textarea
+                              [(ngModel)]="ann.text"
+                              (ngModelChange)="annMgr.updateAnnotation(ann.id, { text: ann.text })"
+                              placeholder="Add a note or comment..."
+                              rows="2"
+                              class="w-full p-2 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-200 text-xs focus:outline-teal-500 resize-none font-mono"></textarea>
+                          </div>
+
+                          <div class="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[10px]">
+                            <div class="flex items-center gap-1">
+                              @for (c of annMgr.colors; track c.name) {
+                                <button
+                                  type="button"
+                                  (click)="setAnnotationColor(ann, c.name)"
+                                  [style.background-color]="c.hex"
+                                  [class]="ann.color === c.name ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'"
+                                  class="w-3.5 h-3.5 rounded-full transition-all cursor-pointer"
+                                  [title]="c.label"></button>
+                              }
+                            </div>
+
+                            <div class="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                (click)="jumpToAnnotationPage(ann.pageNumber)"
+                                class="text-teal-400 hover:text-teal-300 font-mono text-[10px]">
+                                View on Page
+                              </button>
+                              <button
+                                type="button"
+                                (click)="deleteAnnotation(ann.id)"
+                                class="text-rose-400 hover:text-rose-300">
+                                <mat-icon class="text-xs">delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                      @if ((annMgr.filterMode() === 'page' ? currentPageAnnotations() : docAnnotations()).length === 0) {
+                        <div class="col-span-full text-center py-6 text-xs text-slate-400 italic">
+                          No annotations found for {{ annMgr.filterMode() === 'page' ? 'Page ' + pdfCurrentPage() : 'this lecture document' }}.
+                          Select the <strong>Highlight</strong> or <strong>Sticky Note</strong> tool above to annotate!
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
               }
 
               <!-- VIEW 2: Searchable & Copyable Extracted Text -->
@@ -1121,6 +1503,7 @@ if __name__ == "__main__":
 export class StudyReader {
   readonly state = inject(LearningStateService);
   readonly highlighter = inject(SyntaxHighlighter);
+  readonly annMgr = inject(PdfAnnotationManager);
 
   // Canvas ViewChild for native PDF.js rendering
   readonly pdfCanvas = viewChild<ElementRef<HTMLCanvasElement>>('pdfCanvas');
@@ -1130,7 +1513,7 @@ export class StudyReader {
 
   // Documents Library (preloaded academic lectures + localStorage custom files)
   readonly documents = signal<StudyDocument[]>([]);
-  readonly activeDocId = signal<string>('lecture-00-pdf-slides');
+  readonly activeDocId = signal<string>('lecture-functions-data-structures-pdf');
 
   // Reader UX state
   readonly isFilesMenuOpen = signal<boolean>(false);
@@ -1152,11 +1535,24 @@ export class StudyReader {
   readonly pdfRenderError = signal<string | null>(null);
   readonly pdfExtractedText = signal<string>('');
 
+  private dragStartX = 0;
+  private dragStartY = 0;
+
   // Active Document computed
   readonly activeDoc = computed<StudyDocument>(() => {
     const id = this.activeDocId();
     const doc = this.documents().find(d => d.id === id);
     return doc || this.documents()[0] || INITIAL_ACADEMIC_LECTURES[0];
+  });
+
+  // Annotations for current active document (persisted via PdfAnnotationManager)
+  readonly docAnnotations = computed<PdfAnnotation[]>(() => {
+    return this.annMgr.getDocAnnotations(this.activeDoc().id);
+  });
+
+  // Annotations for current active document and current page
+  readonly currentPageAnnotations = computed<PdfAnnotation[]>(() => {
+    return this.annMgr.getPageAnnotations(this.activeDoc().id, this.pdfCurrentPage());
   });
 
   // Check if active document is PDF
@@ -2099,5 +2495,136 @@ ET`;
     }).join('\n');
 
     return out;
+  }
+
+  // --- Annotation System Methods (Delegating to PdfAnnotationManager Service) ---
+  quickDropStickyNote() {
+    this.annMgr.addStickyNote(
+      this.activeDoc().id,
+      this.pdfCurrentPage(),
+      50,
+      35,
+      ''
+    );
+  }
+
+  onOverlayMouseDown(e: MouseEvent) {
+    const tool = this.annMgr.activeTool();
+    const overlay = e.currentTarget as HTMLElement;
+    if (!overlay) return;
+    const rect = overlay.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+
+    if (tool === 'note') {
+      const xPct = Math.round((x / rect.width) * 100);
+      const yPct = Math.round((y / rect.height) * 100);
+      this.annMgr.addStickyNote(this.activeDoc().id, this.pdfCurrentPage(), xPct, yPct, '');
+      return;
+    }
+
+    if (tool === 'highlight') {
+      this.annMgr.isDraggingHighlight.set(true);
+      this.dragStartX = x;
+      this.dragStartY = y;
+      const xPct = (x / rect.width) * 100;
+      const yPct = (y / rect.height) * 100;
+      this.annMgr.currentDragRect.set({ xPct, yPct, widthPct: 0, heightPct: 0 });
+    }
+  }
+
+  onOverlayMouseMove(e: MouseEvent) {
+    if (!this.annMgr.isDraggingHighlight()) return;
+    const overlay = e.currentTarget as HTMLElement;
+    if (!overlay) return;
+    const rect = overlay.getBoundingClientRect();
+    const currentX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const currentY = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+
+    const left = Math.min(this.dragStartX, currentX);
+    const top = Math.min(this.dragStartY, currentY);
+    const width = Math.abs(currentX - this.dragStartX);
+    const height = Math.abs(currentY - this.dragStartY);
+
+    this.annMgr.currentDragRect.set({
+      xPct: Math.round((left / rect.width) * 100),
+      yPct: Math.round((top / rect.height) * 100),
+      widthPct: Math.max(2, Math.round((width / rect.width) * 100)),
+      heightPct: Math.max(2, Math.round((height / rect.height) * 100))
+    });
+  }
+
+  onOverlayMouseUp() {
+    if (!this.annMgr.isDraggingHighlight()) return;
+    this.annMgr.isDraggingHighlight.set(false);
+    const drag = this.annMgr.currentDragRect();
+    this.annMgr.currentDragRect.set(null);
+
+    if (drag && (drag.widthPct > 2 || drag.heightPct > 2)) {
+      this.annMgr.addHighlight(
+        this.activeDoc().id,
+        this.pdfCurrentPage(),
+        drag.xPct,
+        drag.yPct,
+        drag.widthPct,
+        drag.heightPct,
+        'Highlighted Section'
+      );
+    }
+  }
+
+  onAnnotationClick(e: MouseEvent, ann: PdfAnnotation) {
+    e.stopPropagation();
+    if (this.annMgr.activeTool() === 'eraser') {
+      this.annMgr.deleteAnnotation(ann.id);
+    }
+  }
+
+  toggleAnnotationCard(e: MouseEvent, ann: PdfAnnotation) {
+    e.stopPropagation();
+    if (this.annMgr.activeTool() === 'eraser') {
+      this.annMgr.deleteAnnotation(ann.id);
+      return;
+    }
+    this.annMgr.toggleNoteOpen(ann.id);
+  }
+
+  closeAnnotationCard(ann: PdfAnnotation) {
+    this.annMgr.closeNote(ann.id);
+  }
+
+  deleteAnnotation(id: string) {
+    this.annMgr.deleteAnnotation(id);
+  }
+
+  setAnnotationColor(ann: PdfAnnotation, color: AnnotationColor) {
+    this.annMgr.setAnnotationColor(ann.id, color);
+  }
+
+  clearDocumentAnnotations() {
+    if (typeof window !== 'undefined') {
+      const ok = window.confirm(`Clear all annotations and sticky notes for "${this.activeDoc().title}"?`);
+      if (!ok) return;
+    }
+    this.annMgr.clearDocAnnotations(this.activeDoc().id);
+  }
+
+  jumpToAnnotationPage(pageNum: number) {
+    if (pageNum >= 1 && pageNum <= this.pdfTotalPages()) {
+      this.pdfCurrentPage.set(pageNum);
+      this.pdfViewMode.set('canvas');
+    }
+  }
+
+  exportAnnotationsAsMarkdown() {
+    const doc = this.activeDoc();
+    const md = this.annMgr.exportToMarkdown(doc.title, doc.fileName, doc.id);
+    if (!md) return;
+
+    if (typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(md);
+      this.hasCopiedDoc.set(true);
+      setTimeout(() => this.hasCopiedDoc.set(false), 2000);
+    }
   }
 }

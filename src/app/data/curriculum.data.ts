@@ -2,6 +2,246 @@ import { Module } from '../models/curriculum.model';
 
 export const CURRICULUM_DATA: Module[] = [
   {
+    id: 'functions-and-data-structures',
+    number: '00',
+    title: 'Python Functions & Data Structures',
+    subtitle: 'Variables, Function Arguments (*args/**kwargs), Lists, Tuples, Sets, and Dictionaries.',
+    icon: 'data_object',
+    category: 'core',
+    status: 'in_progress',
+    progressPercent: 75,
+    totalLessons: 6,
+    completedLessons: 4,
+    description: "Official 44-slide academic curriculum by T\\ Sondos Saif. Master core data types, function parameter passing (*args tuple pack & **kwargs dict pack), List comprehensions, Set math, and Dictionary lookups.",
+    lessons: [
+      {
+        id: 'fds-vars-io',
+        moduleId: 'functions-and-data-structures',
+        title: 'Variables, Types & I/O Streams',
+        durationMinutes: 12,
+        concepts: ['Variables as memory boxes', 'int, float, str, bool', 'type() checking', 'print() & f-strings', 'input() with int casting'],
+        slideReference: 'Slides 2–8 (Python Functions & Data Structures)',
+        summary: 'Variables are named locations in memory holding mutable values. Input from input() always returns a string, while print(f"Age: {age}") formats outputs.',
+        codeSnippet: `# Python Variables, Type Inspection, and Formatting
+name = "Sara"
+age = 20
+is_student = True
+pi_approx = 3.14159
+
+print(f"User: {name}, Age: {age}, Status: {is_student}")
+print("Type of age:", type(age))
+print("Type of pi:", type(pi_approx))
+
+# Simulate user prompt input processing
+entered_val = "25"  # simulated input("Enter age: ")
+converted_age = int(entered_val)
+print("Next year age:", converted_age + 1)`,
+        expectedOutput: `User: Sara, Age: 20, Status: True
+Type of age: <class 'int'>
+Type of pi: <class 'float'>
+Next year age: 26`,
+        explanation: 'Python uses dynamic typing. Variables store references to objects. The type() function reveals the runtime class.',
+        quiz: {
+          question: 'What is the return type of the built-in input() function in Python?',
+          options: [
+            'int if numeric, str otherwise',
+            'Always str (string)',
+            'Dynamic based on user typing',
+            'NoneType'
+          ],
+          answerIndex: 1,
+          explanation: 'The input() function always returns a string (str), even if digits are entered.'
+        }
+      },
+      {
+        id: 'fds-functions-params',
+        moduleId: 'functions-and-data-structures',
+        title: 'Function Definition, Arguments & Return',
+        durationMinutes: 14,
+        concepts: ['def keyword', 'positional arguments', 'keyword arguments (key=value)', 'default parameters', 'return statement'],
+        slideReference: 'Slides 9–17 (Python Functions & Data Structures)',
+        summary: 'Functions encapsulate reusable code. Positional arguments depend on order; keyword arguments specify names explicitly; default arguments provide fallbacks.',
+        codeSnippet: `# Function Definition with Positional, Keyword, and Default Arguments
+def describe_pet(animal, name="Guest"):
+    """Returns a formatted pet description string."""
+    return f"I have a {animal} named {name}."
+
+# 1. Positional call
+print(describe_pet("dog", "Max"))
+
+# 2. Keyword call (order independent)
+print(describe_pet(name="Luna", animal="cat"))
+
+# 3. Default argument fallback
+print(describe_pet("parrot"))`,
+        expectedOutput: `I have a dog named Max.
+I have a cat named Luna.
+I have a parrot named Guest.`,
+        explanation: 'Functions without an explicit return statement implicitly evaluate to None. Default arguments must follow non-default positional arguments.',
+        quiz: {
+          question: 'In Python, what happens when you call describe_pet(name="Max", animal="dog") using keyword arguments?',
+          options: [
+            'It fails because positional order was reversed',
+            'It matches arguments by keyword name regardless of order',
+            'It creates a dictionary instead of calling the function',
+            'It sets animal to default value'
+          ],
+          answerIndex: 1,
+          explanation: 'Keyword arguments pass values using key=value format, meaning parameter order does not matter.'
+        }
+      },
+      {
+        id: 'fds-args-kwargs',
+        moduleId: 'functions-and-data-structures',
+        title: 'Variable-Length Arguments (*args & **kwargs)',
+        durationMinutes: 18,
+        concepts: ['*args tuple packing', '**kwargs dictionary packing', 'arbitrary arguments', 'combined signature profile(role, *args, **kwargs)'],
+        slideReference: 'Slides 18–22 (Python Functions & Data Structures)',
+        summary: '*args groups arbitrary non-keyworded arguments into a tuple; **kwargs collects named keyword arguments into a dictionary.',
+        codeSnippet: `# Combined Parameter Architecture: Positional, *args, **kwargs
+def profile(role, *args, **kwargs):
+    print("Role:", role)
+    print("Args (Tuple):", args)
+    print("Kwargs (Dict):", kwargs)
+
+profile("Developer", "Python", "Django", "FastAPI", level="Senior", remote=True, region="EMEA")`,
+        expectedOutput: `Role: Developer
+Args (Tuple): ('Python', 'Django', 'FastAPI')
+Kwargs (Dict): {'level': 'Senior', 'remote': True, 'region': 'EMEA'}`,
+        explanation: '*args gathers variable arguments as an immutable tuple. **kwargs collects keyword arguments into a standard dictionary accessible via .items() or .get().',
+        quiz: {
+          question: 'Inside a function defined with def myFun(*args):, what data structure is args received as?',
+          options: [
+            'A mutable list []',
+            'An immutable tuple ()',
+            'A dictionary {key: value}',
+            'A set {}'
+          ],
+          answerIndex: 1,
+          explanation: 'The *args syntax packages variable-length positional arguments into an immutable tuple.'
+        }
+      },
+      {
+        id: 'fds-lists-comprehensions',
+        moduleId: 'functions-and-data-structures',
+        title: 'Lists, Slicing & List Comprehensions',
+        durationMinutes: 16,
+        concepts: ['List mutability', 'negative indexing [-1]', 'slicing [start:end:step]', '2D nested matrix', 'list comprehensions [x**2 for x in ...]'],
+        slideReference: 'Slides 24–33 (Python Functions & Data Structures)',
+        summary: 'Lists are ordered, mutable, and indexable. Comprehensions provide concise one-line syntax for mapping and filtering iterables.',
+        codeSnippet: `# List Manipulation, Slicing, and Comprehensions
+fruits = ["apple", "banana", "cherry", "mango", "orange"]
+fruits.append("kiwi")
+fruits.insert(1, "grape")
+
+print("Indexed slice [1:4]:", fruits[1:4])
+print("Step slice [::2]:", fruits[::2])
+
+# List Comprehension: Square of numbers 0 to 5
+squares = [i ** 2 for i in range(6)]
+print("Squares:", squares)
+
+# List Comprehension with Condition: Even numbers up to 10
+even_numbers = [x for x in range(11) if x % 2 == 0]
+print("Even numbers:", even_numbers)`,
+        expectedOutput: `Indexed slice [1:4]: ['grape', 'banana', 'cherry']
+Step slice [::2]: ['apple', 'banana', 'mango', 'kiwi']
+Squares: [0, 1, 4, 9, 16, 25]
+Even numbers: [0, 2, 4, 6, 8, 10]`,
+        explanation: 'List slicing syntax a[start:stop:step] generates sublists without mutating the source list. Comprehensions execute in optimized C bytecode.',
+        quiz: {
+          question: 'What is the evaluated result of [x * 2 for x in range(5) if x % 2 != 0]?',
+          options: [
+            '[0, 2, 4]',
+            '[2, 6]',
+            '[1, 3]',
+            '[0, 2, 4, 6, 8]'
+          ],
+          answerIndex: 1,
+          explanation: 'Odd numbers in range(5) are 1 and 3. Multiplying each by 2 yields [2, 6].'
+        }
+      },
+      {
+        id: 'fds-tuples-sets',
+        moduleId: 'functions-and-data-structures',
+        title: 'Tuples & Sets (Mathematical Operations)',
+        durationMinutes: 14,
+        concepts: ['Tuple immutability', 'memory efficiency', 'Set uniqueness', 'Union |', 'Intersection &', 'Difference -'],
+        slideReference: 'Slides 34–36 (Python Functions & Data Structures)',
+        summary: 'Tuples cannot be altered once created. Sets eliminate duplicates and allow binary set mathematics: Union (|), Intersection (&), and Difference (-).',
+        codeSnippet: `# Tuples Immutability and Set Operations
+person = ("Ali", 25, "Sana'a")
+print("Tuple access person[0]:", person[0])
+
+# Sets and Set Mathematics
+a = {1, 2, 3, 4}
+b = {3, 4, 5, 6}
+
+print("Union (a | b):", sorted(list(a | b)))
+print("Intersection (a & b):", sorted(list(a & b)))
+print("Difference (a - b):", sorted(list(a - b)))`,
+        expectedOutput: `Tuple access person[0]: Ali
+Union (a | b): [1, 2, 3, 4, 5, 6]
+Intersection (a & b): [3, 4]
+Difference (a - b): [1, 2]`,
+        explanation: 'Tuples are immutable and hashable, making them valid dictionary keys. Sets use hash tables for O(1) membership lookups and auto-deduplication.',
+        quiz: {
+          question: 'Given sets a = {1, 2, 3} and b = {3, 4, 5}, what does print(a & b) output?',
+          options: [
+            '{1, 2, 3, 4, 5}',
+            '{3}',
+            '{1, 2}',
+            '{4, 5}'
+          ],
+          answerIndex: 1,
+          explanation: 'The & operator computes the set intersection, which finds common elements ({3}).'
+        }
+      },
+      {
+        id: 'fds-dictionaries-matrix',
+        moduleId: 'functions-and-data-structures',
+        title: 'Dictionaries & Structure Decision Matrix',
+        durationMinutes: 16,
+        concepts: ['Key-Value pairs', '.get() fallback', '.keys(), .values(), .items()', '.update()', 'Comparison Matrix'],
+        slideReference: 'Slides 37–44 (Python Functions & Data Structures)',
+        summary: 'Dictionaries store associative key-value mappings. Compare List vs Tuple vs Set vs Dict across mutability, ordering, duplicates, and indexing.',
+        codeSnippet: `# Dictionaries and Lookup Handling
+student = {"name": "Sara", "age": 20, "grade": "A"}
+
+# Safe retrieval with .get()
+print("Name:", student.get("name"))
+print("Missing key with fallback:", student.get("gpa", "N/A"))
+
+# Dictionary updates
+student.update({"age": 21, "city": "London"})
+
+# Iterating over key-value pairs
+print("--- Dictionary Items ---")
+for key, value in student.items():
+    print(f"{key} -> {value}")`,
+        expectedOutput: `Name: Sara
+Missing key with fallback: N/A
+--- Dictionary Items ---
+name -> Sara
+age -> 21
+grade -> A
+city -> London`,
+        explanation: 'Dictionaries provide O(1) average-time lookups by key. Use student.get(k, default) to prevent KeyError exceptions on absent keys.',
+        quiz: {
+          question: 'Which Python data structure is unordered, allows mutability, but requires unique, hashable keys?',
+          options: [
+            'List',
+            'Tuple',
+            'Set',
+            'Dictionary'
+          ],
+          answerIndex: 3,
+          explanation: 'Dictionaries are associative mappings where keys must be unique and hashable (e.g. strings, numbers, or tuples).'
+        }
+      }
+    ]
+  },
+  {
     id: 'file-handling-modes',
     number: '01',
     title: 'File Handling & Memory Buffers',

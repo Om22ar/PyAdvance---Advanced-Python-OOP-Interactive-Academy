@@ -76,23 +76,13 @@ import { LearningStateService } from '../../services/learning-state.service';
             </button>
 
             <button
-              (click)="state.setView('vscode')"
-              [class]="state.activeView() === 'vscode'
-                ? 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600/20 border-l-4 border-blue-500 shadow-sm transition-all'
+              (click)="state.setView('coder')"
+              [class]="state.activeView() === 'coder'
+                ? 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-500/15 border-l-4 border-teal-400 shadow-sm transition-all'
                 : 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all'">
-              <mat-icon class="text-xl leading-none text-blue-400">integration_instructions</mat-icon>
-              <span>VS Code IDE</span>
-              <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono font-bold">IDE</span>
-            </button>
-
-            <button
-              (click)="state.setView('study')"
-              [class]="state.activeView() === 'study'
-                ? 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-purple-500/20 border-l-4 border-purple-400 shadow-sm transition-all'
-                : 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all'">
-              <mat-icon class="text-xl leading-none text-purple-400">auto_stories</mat-icon>
-              <span>Study &amp; Lectures</span>
-              <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono font-bold">READ</span>
+              <mat-icon class="text-xl leading-none text-teal-400">terminal</mat-icon>
+              <span>Real Python Coder</span>
+              <span class="ml-auto text-[10px] font-mono font-semibold text-teal-300">IDE</span>
             </button>
           </nav>
         </div>
