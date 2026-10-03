@@ -2,246 +2,6 @@ import { Module } from '../models/curriculum.model';
 
 export const CURRICULUM_DATA: Module[] = [
   {
-    id: 'functions-and-data-structures',
-    number: '00',
-    title: 'Python Functions & Data Structures',
-    subtitle: 'Variables, Function Arguments (*args/**kwargs), Lists, Tuples, Sets, and Dictionaries.',
-    icon: 'data_object',
-    category: 'core',
-    status: 'in_progress',
-    progressPercent: 75,
-    totalLessons: 6,
-    completedLessons: 4,
-    description: "Official 44-slide academic curriculum by T\\ Sondos Saif. Master core data types, function parameter passing (*args tuple pack & **kwargs dict pack), List comprehensions, Set math, and Dictionary lookups.",
-    lessons: [
-      {
-        id: 'fds-vars-io',
-        moduleId: 'functions-and-data-structures',
-        title: 'Variables, Types & I/O Streams',
-        durationMinutes: 12,
-        concepts: ['Variables as memory boxes', 'int, float, str, bool', 'type() checking', 'print() & f-strings', 'input() with int casting'],
-        slideReference: 'Slides 2–8 (Python Functions & Data Structures)',
-        summary: 'Variables are named locations in memory holding mutable values. Input from input() always returns a string, while print(f"Age: {age}") formats outputs.',
-        codeSnippet: `# Python Variables, Type Inspection, and Formatting
-name = "Sara"
-age = 20
-is_student = True
-pi_approx = 3.14159
-
-print(f"User: {name}, Age: {age}, Status: {is_student}")
-print("Type of age:", type(age))
-print("Type of pi:", type(pi_approx))
-
-# Simulate user prompt input processing
-entered_val = "25"  # simulated input("Enter age: ")
-converted_age = int(entered_val)
-print("Next year age:", converted_age + 1)`,
-        expectedOutput: `User: Sara, Age: 20, Status: True
-Type of age: <class 'int'>
-Type of pi: <class 'float'>
-Next year age: 26`,
-        explanation: 'Python uses dynamic typing. Variables store references to objects. The type() function reveals the runtime class.',
-        quiz: {
-          question: 'What is the return type of the built-in input() function in Python?',
-          options: [
-            'int if numeric, str otherwise',
-            'Always str (string)',
-            'Dynamic based on user typing',
-            'NoneType'
-          ],
-          answerIndex: 1,
-          explanation: 'The input() function always returns a string (str), even if digits are entered.'
-        }
-      },
-      {
-        id: 'fds-functions-params',
-        moduleId: 'functions-and-data-structures',
-        title: 'Function Definition, Arguments & Return',
-        durationMinutes: 14,
-        concepts: ['def keyword', 'positional arguments', 'keyword arguments (key=value)', 'default parameters', 'return statement'],
-        slideReference: 'Slides 9–17 (Python Functions & Data Structures)',
-        summary: 'Functions encapsulate reusable code. Positional arguments depend on order; keyword arguments specify names explicitly; default arguments provide fallbacks.',
-        codeSnippet: `# Function Definition with Positional, Keyword, and Default Arguments
-def describe_pet(animal, name="Guest"):
-    """Returns a formatted pet description string."""
-    return f"I have a {animal} named {name}."
-
-# 1. Positional call
-print(describe_pet("dog", "Max"))
-
-# 2. Keyword call (order independent)
-print(describe_pet(name="Luna", animal="cat"))
-
-# 3. Default argument fallback
-print(describe_pet("parrot"))`,
-        expectedOutput: `I have a dog named Max.
-I have a cat named Luna.
-I have a parrot named Guest.`,
-        explanation: 'Functions without an explicit return statement implicitly evaluate to None. Default arguments must follow non-default positional arguments.',
-        quiz: {
-          question: 'In Python, what happens when you call describe_pet(name="Max", animal="dog") using keyword arguments?',
-          options: [
-            'It fails because positional order was reversed',
-            'It matches arguments by keyword name regardless of order',
-            'It creates a dictionary instead of calling the function',
-            'It sets animal to default value'
-          ],
-          answerIndex: 1,
-          explanation: 'Keyword arguments pass values using key=value format, meaning parameter order does not matter.'
-        }
-      },
-      {
-        id: 'fds-args-kwargs',
-        moduleId: 'functions-and-data-structures',
-        title: 'Variable-Length Arguments (*args & **kwargs)',
-        durationMinutes: 18,
-        concepts: ['*args tuple packing', '**kwargs dictionary packing', 'arbitrary arguments', 'combined signature profile(role, *args, **kwargs)'],
-        slideReference: 'Slides 18–22 (Python Functions & Data Structures)',
-        summary: '*args groups arbitrary non-keyworded arguments into a tuple; **kwargs collects named keyword arguments into a dictionary.',
-        codeSnippet: `# Combined Parameter Architecture: Positional, *args, **kwargs
-def profile(role, *args, **kwargs):
-    print("Role:", role)
-    print("Args (Tuple):", args)
-    print("Kwargs (Dict):", kwargs)
-
-profile("Developer", "Python", "Django", "FastAPI", level="Senior", remote=True, region="EMEA")`,
-        expectedOutput: `Role: Developer
-Args (Tuple): ('Python', 'Django', 'FastAPI')
-Kwargs (Dict): {'level': 'Senior', 'remote': True, 'region': 'EMEA'}`,
-        explanation: '*args gathers variable arguments as an immutable tuple. **kwargs collects keyword arguments into a standard dictionary accessible via .items() or .get().',
-        quiz: {
-          question: 'Inside a function defined with def myFun(*args):, what data structure is args received as?',
-          options: [
-            'A mutable list []',
-            'An immutable tuple ()',
-            'A dictionary {key: value}',
-            'A set {}'
-          ],
-          answerIndex: 1,
-          explanation: 'The *args syntax packages variable-length positional arguments into an immutable tuple.'
-        }
-      },
-      {
-        id: 'fds-lists-comprehensions',
-        moduleId: 'functions-and-data-structures',
-        title: 'Lists, Slicing & List Comprehensions',
-        durationMinutes: 16,
-        concepts: ['List mutability', 'negative indexing [-1]', 'slicing [start:end:step]', '2D nested matrix', 'list comprehensions [x**2 for x in ...]'],
-        slideReference: 'Slides 24–33 (Python Functions & Data Structures)',
-        summary: 'Lists are ordered, mutable, and indexable. Comprehensions provide concise one-line syntax for mapping and filtering iterables.',
-        codeSnippet: `# List Manipulation, Slicing, and Comprehensions
-fruits = ["apple", "banana", "cherry", "mango", "orange"]
-fruits.append("kiwi")
-fruits.insert(1, "grape")
-
-print("Indexed slice [1:4]:", fruits[1:4])
-print("Step slice [::2]:", fruits[::2])
-
-# List Comprehension: Square of numbers 0 to 5
-squares = [i ** 2 for i in range(6)]
-print("Squares:", squares)
-
-# List Comprehension with Condition: Even numbers up to 10
-even_numbers = [x for x in range(11) if x % 2 == 0]
-print("Even numbers:", even_numbers)`,
-        expectedOutput: `Indexed slice [1:4]: ['grape', 'banana', 'cherry']
-Step slice [::2]: ['apple', 'banana', 'mango', 'kiwi']
-Squares: [0, 1, 4, 9, 16, 25]
-Even numbers: [0, 2, 4, 6, 8, 10]`,
-        explanation: 'List slicing syntax a[start:stop:step] generates sublists without mutating the source list. Comprehensions execute in optimized C bytecode.',
-        quiz: {
-          question: 'What is the evaluated result of [x * 2 for x in range(5) if x % 2 != 0]?',
-          options: [
-            '[0, 2, 4]',
-            '[2, 6]',
-            '[1, 3]',
-            '[0, 2, 4, 6, 8]'
-          ],
-          answerIndex: 1,
-          explanation: 'Odd numbers in range(5) are 1 and 3. Multiplying each by 2 yields [2, 6].'
-        }
-      },
-      {
-        id: 'fds-tuples-sets',
-        moduleId: 'functions-and-data-structures',
-        title: 'Tuples & Sets (Mathematical Operations)',
-        durationMinutes: 14,
-        concepts: ['Tuple immutability', 'memory efficiency', 'Set uniqueness', 'Union |', 'Intersection &', 'Difference -'],
-        slideReference: 'Slides 34–36 (Python Functions & Data Structures)',
-        summary: 'Tuples cannot be altered once created. Sets eliminate duplicates and allow binary set mathematics: Union (|), Intersection (&), and Difference (-).',
-        codeSnippet: `# Tuples Immutability and Set Operations
-person = ("Ali", 25, "Sana'a")
-print("Tuple access person[0]:", person[0])
-
-# Sets and Set Mathematics
-a = {1, 2, 3, 4}
-b = {3, 4, 5, 6}
-
-print("Union (a | b):", sorted(list(a | b)))
-print("Intersection (a & b):", sorted(list(a & b)))
-print("Difference (a - b):", sorted(list(a - b)))`,
-        expectedOutput: `Tuple access person[0]: Ali
-Union (a | b): [1, 2, 3, 4, 5, 6]
-Intersection (a & b): [3, 4]
-Difference (a - b): [1, 2]`,
-        explanation: 'Tuples are immutable and hashable, making them valid dictionary keys. Sets use hash tables for O(1) membership lookups and auto-deduplication.',
-        quiz: {
-          question: 'Given sets a = {1, 2, 3} and b = {3, 4, 5}, what does print(a & b) output?',
-          options: [
-            '{1, 2, 3, 4, 5}',
-            '{3}',
-            '{1, 2}',
-            '{4, 5}'
-          ],
-          answerIndex: 1,
-          explanation: 'The & operator computes the set intersection, which finds common elements ({3}).'
-        }
-      },
-      {
-        id: 'fds-dictionaries-matrix',
-        moduleId: 'functions-and-data-structures',
-        title: 'Dictionaries & Structure Decision Matrix',
-        durationMinutes: 16,
-        concepts: ['Key-Value pairs', '.get() fallback', '.keys(), .values(), .items()', '.update()', 'Comparison Matrix'],
-        slideReference: 'Slides 37–44 (Python Functions & Data Structures)',
-        summary: 'Dictionaries store associative key-value mappings. Compare List vs Tuple vs Set vs Dict across mutability, ordering, duplicates, and indexing.',
-        codeSnippet: `# Dictionaries and Lookup Handling
-student = {"name": "Sara", "age": 20, "grade": "A"}
-
-# Safe retrieval with .get()
-print("Name:", student.get("name"))
-print("Missing key with fallback:", student.get("gpa", "N/A"))
-
-# Dictionary updates
-student.update({"age": 21, "city": "London"})
-
-# Iterating over key-value pairs
-print("--- Dictionary Items ---")
-for key, value in student.items():
-    print(f"{key} -> {value}")`,
-        expectedOutput: `Name: Sara
-Missing key with fallback: N/A
---- Dictionary Items ---
-name -> Sara
-age -> 21
-grade -> A
-city -> London`,
-        explanation: 'Dictionaries provide O(1) average-time lookups by key. Use student.get(k, default) to prevent KeyError exceptions on absent keys.',
-        quiz: {
-          question: 'Which Python data structure is unordered, allows mutability, but requires unique, hashable keys?',
-          options: [
-            'List',
-            'Tuple',
-            'Set',
-            'Dictionary'
-          ],
-          answerIndex: 3,
-          explanation: 'Dictionaries are associative mappings where keys must be unique and hashable (e.g. strings, numbers, or tuples).'
-        }
-      }
-    ]
-  },
-  {
     id: 'file-handling-modes',
     number: '01',
     title: 'File Handling & Memory Buffers',
@@ -1182,6 +942,236 @@ Result: Live instantly with SSL at https://my-python-oop-academy.surge.sh`,
           answerIndex: 1,
           explanation: 'On Surge.sh, any request that doesn\'t match an exact static file serves 200.html with HTTP status 200, allowing the client-side router to handle the route.'
         }
+      }
+    ]
+  },
+  {
+    id: 'lec2-bilingual-reference',
+    number: '13',
+    title: 'مرجع محاضرة 2: pythonfuncbuiltandopplec2.pdf (المصطلحات والأكواد)',
+    subtitle: 'حصر وتأطير 40 مصطلحاً إنجليزياً وترجمتها للعربية مع كافة أمثلة الأكواد البرمجية الـ 22.',
+    icon: 'translate',
+    category: 'oop',
+    status: 'completed',
+    progressPercent: 100,
+    totalLessons: 6,
+    completedLessons: 6,
+    description: 'الدليل الشامل لمحاضرة الدوال والدوال المدمجة والبرمجة كائنية التوجه (Functions, *args, **kwargs, Lambda, OOP, Inheritance, Polymorphism, Diamond MRO, ABC, Composition, Dunder Methods).',
+    lessons: [
+      {
+        id: 'lec2-sec1-args-kwargs',
+        moduleId: 'lec2-bilingual-reference',
+        title: '1. استخدامات *args و **kwargs (5 أمثلة)',
+        durationMinutes: 12,
+        concepts: ['*args Tuple', '**kwargs Dictionary', 'Positional + *argv', 'role, *args, **kwargs'],
+        slideReference: 'pythonfuncbuiltandopplec2.pdf — Section 1',
+        summary: 'استقبال وسائط غير مسماة *args في Tuple، واستقبال وسائط مسماة **kwargs في Dictionary، والدمج بينها وبين المعاملات العادية.',
+        codeSnippet: `def myFun(*args):
+    for arg in args:
+        print(arg)
+
+myFun('Hello', 'Welcome', 'to', 'PYTHON')
+
+def fun(arg1, *argv):
+    print("First argument :", arg1)
+    for arg in argv:
+        print("Argument *argv :", arg)
+
+fun('Hello', 'Welcome', 'to', 'python')
+
+def profile(role, *args, **kwargs):
+    print("Role:", role)
+    print("Args:", args)
+    print("Kwargs:", kwargs)
+
+profile("Developer", "Python", "Django", level="Senior", remote=True)`,
+        expectedOutput: `Hello
+Welcome
+to
+PYTHON
+First argument : Hello
+Argument *argv : Welcome
+Argument *argv : to
+Argument *argv : python
+Role: Developer
+Args: ('Python', 'Django')
+Kwargs: {'level': 'Senior', 'remote': True}`,
+        explanation: '*args يجمع الوسائط غير المسماة في صف Tuple، بينما **kwargs يجمع الوسائط المسماة key=value في قاموس Dictionary.'
+      },
+      {
+        id: 'lec2-sec2-lambda',
+        moduleId: 'lec2-bilingual-reference',
+        title: '2. دوال لامبدا (Lambda Functions) والممارسات الأفضل',
+        durationMinutes: 10,
+        concepts: ['lambda x, y: x + y', 'is_strong password check', 'lambda vs def readability'],
+        slideReference: 'pythonfuncbuiltandopplec2.pdf — Section 2',
+        summary: 'دوال لامبدا المجهولة والسريعة للتعبيرات البسيطة، ومقارنتها مع def عند زيادة التعقيد الشرطي.',
+        codeSnippet: `add = lambda x, y: x + y
+print(add(3, 5))  # Output: 8
+
+is_strong = lambda password: len(password) >= 8
+print(is_strong("admin123"))
+print(is_strong("Secr3tKey!"))
+
+# الأسلوب الأفضل بـ def لزيادة وضوح الكود:
+def process(x):
+    if x > 10:
+        return x**2 + 5
+    else:
+        return x - 1
+
+print(process(12))`,
+        expectedOutput: `8
+True
+True
+149`,
+        explanation: 'دالة لامبدا مثالية للعمليات المضمنة القصيرة، لكن يُفضل استخدام def عند وجود تفرعات شرطية معقدة لزيادة وضوح الكود.'
+      },
+      {
+        id: 'lec2-sec3-oop-vars',
+        moduleId: 'lec2-bilingual-reference',
+        title: '3. أساسيات الكائنات ومتغيرات الفئات (self, Local, Instance, Class)',
+        durationMinutes: 14,
+        concepts: ['Person & self', 'temp_speed (Local) vs self.speed (Instance)', 'Car.wheels = 4 (Class Variable)'],
+        slideReference: 'pythonfuncbuiltandopplec2.pdf — Section 3',
+        summary: 'الفرق الجوهري بين المتغير المحلي داخل الدالة، ومتغير الكائن المرتبط بـ self، ومتغير الفئة المشترك بين جميع الكائنات.',
+        codeSnippet: `class Person:
+    def __init__(self, name):
+        self.name = name
+
+    def greet(self):
+        print("Hello, my name is", self.name)
+
+p = Person("Ali")
+p.greet()
+
+class Car:
+    wheels = 4  # متغير فئة (Class Variable)
+
+    def __init__(self, brand, speed):
+        self.brand = brand   # متغير كائن
+        self.speed = speed   # متغير كائن
+
+    def info(self):
+        print(f"{self.brand} runs at {self.speed} km/h")
+
+car1 = Car("Toyota", 180)
+car1.info()`,
+        expectedOutput: `Hello, my name is Ali
+Toyota runs at 180 km/h`,
+        explanation: 'المرجع self يشير إلى نسخة الكائن الحالية، بينما متغير الفئة مثل wheels = 4 يكون مشتركاً بين جميع نسخ الفئة.'
+      },
+      {
+        id: 'lec2-sec4-inheritance',
+        moduleId: 'lec2-bilingual-reference',
+        title: '4. أنواع الوراثة المختلفة و super() وتجاوز الطرق',
+        durationMinutes: 15,
+        concepts: ['Single Inheritance', 'Multiple Inheritance', 'Multilevel Inheritance', 'super()', 'Method Overriding'],
+        slideReference: 'pythonfuncbuiltandopplec2.pdf — Section 4',
+        summary: 'تطبيق عملي للوراثة الأحادية والمتعددة ومتعددة المستويات، واستدعاء طرق الأب عبر super() وتجاوز الطرق.',
+        codeSnippet: `class Tool:
+    def info(self):
+        print("Basic Tool")
+
+class Scanner(Tool):
+    def scan(self):
+        print("Scanning...")
+
+class AdvancedScanner(Scanner):
+    def deep_scan(self):
+        print("Deep scanning...")
+
+adv = AdvancedScanner()
+adv.info()
+adv.scan()
+adv.deep_scan()
+
+class Parent:
+    def greet(self):
+        print("Hello from Parent")
+
+class Child(Parent):
+    def greet(self):
+        super().greet()
+        print("Hello from Child")
+
+c = Child()
+c.greet()`,
+        expectedOutput: `Basic Tool
+Scanning...
+Deep scanning...
+Hello from Parent
+Hello from Child`,
+        explanation: 'تتيح الكلمة المفتاحية super() استدعاء طريقة الفئة الأب من داخل الفئة الابنة قبل أو بعد إضافة السلوك المخصص.'
+      },
+      {
+        id: 'lec2-sec5-polymorphism-mro',
+        moduleId: 'lec2-bilingual-reference',
+        title: '5. التعددية (Duck Typing) ومشكلة الماسة وتسلسل MRO',
+        durationMinutes: 16,
+        concepts: ['Duck Typing', 'NotImplementedError Interface', 'Diamond Problem D(B, C)', 'D.mro()'],
+        slideReference: 'pythonfuncbuiltandopplec2.pdf — Section 5',
+        summary: 'تعدد الأشكال المرن وبفرض واجهة مشتركة، وحل مشكلة الماسة عبر خوارزمية C3 الخطية وتسلسل MRO.',
+        codeSnippet: `class A:
+    def say(self):
+        print("A")
+
+class B(A):
+    def say(self):
+        print("B")
+        super().say()
+
+class C(A):
+    def say(self):
+        print("C")
+        super().say()
+
+class D(B, C):
+    def say(self):
+        print("D")
+        super().say()
+
+d = D()
+d.say()
+print(D.mro())`,
+        expectedOutput: `D
+B
+C
+A
+[<class '__main__.D'>, <class '__main__.B'>, <class '__main__.C'>, <class '__main__.A'>, <class 'object'>]`,
+        explanation: 'يتبع super() في شجرة الماسة تسلسل MRO المحسوب بخوارزمية C3 الخطية: D -> B -> C -> A -> object.'
+      },
+      {
+        id: 'lec2-sec6-abc-composition-dunder',
+        moduleId: 'lec2-bilingual-reference',
+        title: '6. الفئات المجردة (abc) والتركيب (Has-A) والدوال السحرية (__str__)',
+        durationMinutes: 15,
+        concepts: ['abc.ABC & @abstractmethod', 'Composition SecuritySuite', 'Component Swapping', 'Dunder __str__'],
+        slideReference: 'pythonfuncbuiltandopplec2.pdf — Section 6',
+        summary: 'إلزام الفئات الابنة بتنفيذ الطرق عبر @abstractmethod، وتصميم الأنظمة المرنة بالتركيب والتفويض، وتخصيص __str__.',
+        codeSnippet: `from abc import ABC, abstractmethod
+
+class SecurityTool(ABC):
+    @abstractmethod
+    def scan(self):
+        pass
+
+class Firewall(SecurityTool):
+    def __init__(self, name="MyFirewall"):
+        self.name = name
+
+    def scan(self):
+        print("Scanning network ports for suspicious activity")
+
+    def __str__(self):
+        return f"Firewall: {self.name}"
+
+fw = Firewall("MyFirewall")
+fw.scan()
+print(fw)`,
+        expectedOutput: `Scanning network ports for suspicious activity
+Firewall: MyFirewall`,
+        explanation: 'تمنع الفئة المجردة إنشاء كائنات مباشرة منها وتُجبر الفئات الابنة على تطبيق الطرق المزخرفة بـ @abstractmethod.'
       }
     ]
   }

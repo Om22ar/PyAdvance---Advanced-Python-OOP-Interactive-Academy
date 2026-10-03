@@ -50,7 +50,17 @@ import { LearningStateService } from '../../services/learning-state.service';
                 : 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all'">
               <mat-icon class="text-xl leading-none">menu_book</mat-icon>
               <span>Curriculum</span>
-              <span class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">12</span>
+              <span class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">13</span>
+            </button>
+
+            <button
+              (click)="state.setView('lec2')"
+              [class]="state.activeView() === 'lec2'
+                ? 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-500/15 border-l-4 border-teal-400 shadow-sm transition-all'
+                : 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all'">
+              <mat-icon class="text-xl leading-none text-amber-400">translate</mat-icon>
+              <span>ملخص محاضرة 2 (PDF)</span>
+              <span class="ml-auto text-[10px] font-mono font-semibold text-amber-300">AR/EN</span>
             </button>
 
             <button

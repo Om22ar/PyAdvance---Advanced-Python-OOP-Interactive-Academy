@@ -134,6 +134,39 @@ import { ActivityItem } from '../../models/curriculum.model';
         </div>
       </div>
 
+      <!-- Bilingual Lecture 2 Reference Card (pythonfuncbuiltandopplec2.pdf) -->
+      <div class="rounded-2xl bg-gradient-to-r from-[#0D1E25] via-[#112730] to-[#0B171D] text-white p-6 border border-teal-500/30 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5" dir="rtl">
+        <div class="space-y-2 max-w-3xl">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold">
+            <mat-icon class="text-xs leading-none">translate</mat-icon>
+            <span>مرجع المحاضرة الثانية الكامل · pythonfuncbuiltandopplec2.pdf</span>
+          </div>
+          <h3 class="text-lg sm:text-xl font-extrabold text-white">
+            جدول المصطلحات الإنجليزية وتعاريفها بالعربية (40 مصطلحاً) + جميع الأكواد البرمجية (22 مثالاً)
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            استعرض جدول المصطلحات المترجم بالكامل (*args, **kwargs, Lambda, OOP, Inheritance, Polymorphism, Diamond MRO, ABC, Composition, Dunder) مع إمكانية تشغيل جميع الأكواد مباشرة أو فتحها كمشروع متكامل داخل محرر بايثون.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            (click)="state.setView('lec2')"
+            class="px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm">
+            <mat-icon class="text-base leading-none">menu_book</mat-icon>
+            <span>فتح جدول المصطلحات والأكواد</span>
+          </button>
+          <button
+            type="button"
+            (click)="state.openCodeInRealCoder('01_args_kwargs.py', '')"
+            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 font-semibold text-xs flex items-center gap-1.5 transition-all">
+            <mat-icon class="text-base leading-none">terminal</mat-icon>
+            <span>فتح المشروع في Real Python Coder</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Bottom Row: Skill Map & Recent Activity -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <!-- Skill Map (7 cols) -->

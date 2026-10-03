@@ -26,38 +26,9 @@ import { FirebaseService } from '../../services/firebase.service';
           <span class="text-teal-600 dark:text-teal-400 font-bold">PyAdvance</span>
           <span class="text-slate-300 dark:text-slate-600">/</span>
           <span class="text-slate-800 dark:text-slate-200 capitalize font-medium">
-            {{ state.activeView() === 'vscode' ? 'VS Code Coder' : state.activeView() }}
+            {{ state.activeView() }}
           </span>
         </div>
-
-        <!-- Button to open page for Python Coder like VS Code with Terminal -->
-        <button
-          type="button"
-          (click)="state.setView('vscode')"
-          [class]="state.activeView() === 'vscode'
-            ? 'px-3 py-1.5 rounded-xl bg-blue-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm ring-2 ring-blue-400/40 transition-all'
-            : 'px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 font-semibold text-xs flex items-center gap-1.5 transition-all shadow-xs active:scale-95'"
-          title="Open VS Code Python Coder with integrated Terminal">
-          <svg class="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .32 8.704l3.633 3.298L.32 15.296a1 1 0 0 0 .007 1.442l1.322 1.202c.38.345.952.37 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.94-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zM18.5 18.5l-6.84-6.5L18.5 5.5v13z"/>
-          </svg>
-          <span class="font-bold">VS Code Coder</span>
-          <span class="text-[9px] font-mono uppercase bg-blue-500/20 text-blue-400 px-1 py-0.2 rounded hidden sm:inline">IDE</span>
-        </button>
-
-        <!-- Button to open Study & Lectures reader -->
-        <button
-          type="button"
-          (click)="state.setView('study')"
-          [class]="state.activeView() === 'study'
-            ? 'px-3 py-1.5 rounded-xl bg-purple-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm ring-2 ring-purple-400/40 transition-all'
-            : 'px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-semibold text-xs flex items-center gap-1.5 transition-all shadow-xs active:scale-95'"
-          title="Open Study & Lectures Reader">
-          <mat-icon class="text-sm text-purple-500 dark:text-purple-400">auto_stories</mat-icon>
-          <span class="font-bold hidden sm:inline">Study &amp; Lectures</span>
-          <span class="font-bold sm:hidden">Study</span>
-          <span class="text-[9px] font-mono uppercase bg-purple-500/20 text-purple-400 px-1 py-0.2 rounded hidden md:inline">READ</span>
-        </button>
       </div>
 
       <!-- Zone 2: Search Affordance & Quick Filters -->
@@ -156,6 +127,15 @@ import { FirebaseService } from '../../services/firebase.service';
             </button>
 
             <button
+              (click)="navigateAndClose('lec2')"
+              [class]="state.activeView() === 'lec2'
+                ? 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-500/20 text-teal-400'
+                : 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40'">
+              <mat-icon class="text-amber-400">translate</mat-icon>
+              <span>ملخص محاضرة 2 (PDF)</span>
+            </button>
+
+            <button
               (click)="navigateAndClose('playground')"
               [class]="state.activeView() === 'playground'
                 ? 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-500/20 text-teal-400'
@@ -171,16 +151,6 @@ import { FirebaseService } from '../../services/firebase.service';
                 : 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40'">
               <mat-icon>science</mat-icon>
               <span>Visual Simulators</span>
-            </button>
-
-            <button
-              (click)="navigateAndClose('vscode')"
-              [class]="state.activeView() === 'vscode'
-                ? 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600/30 text-blue-300 border border-blue-500/40'
-                : 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-blue-400 hover:bg-slate-800/40'">
-              <mat-icon class="text-blue-400">integration_instructions</mat-icon>
-              <span>VS Code Coder</span>
-              <span class="text-[10px] font-bold text-blue-300 bg-blue-950 px-1.5 py-0.5 rounded ml-auto">IDE</span>
             </button>
 
             <button
@@ -458,7 +428,7 @@ export class TopbarComponent {
     setTimeout(() => this.hasReset.set(false), 2500);
   }
 
-  navigateAndClose(view: 'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'vscode') {
+  navigateAndClose(view: 'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'lec2') {
     this.state.setView(view);
     this.isMobileMenuOpen.set(false);
   }

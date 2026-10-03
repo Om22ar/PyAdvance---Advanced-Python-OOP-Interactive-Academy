@@ -19,8 +19,9 @@ export class LearningStateService {
     'regex-search-findall'
   ]);
 
-  readonly activeView = signal<'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'coder'>('overview');
+  readonly activeView = signal<'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'coder' | 'lec2'>('overview');
   readonly localPythonPath = signal<string>('/usr/bin/python3');
+  readonly pendingCoderFile = signal<{ fileName: string; code: string } | null>(null);
   readonly selectedModuleId = signal<string>('file-handling-modes');
   readonly selectedLessonId = signal<string>('file-modes-intro');
   readonly isDarkMode = signal<boolean>(false);
@@ -119,11 +120,16 @@ export class LearningStateService {
     return this.completedStepIds().filter(id => lessonIds.includes(id));
   }
 
-  setView(view: 'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'coder') {
+  setView(view: 'overview' | 'curriculum' | 'playground' | 'simulators' | 'surge' | 'coder' | 'lec2') {
     this.activeView.set(view);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  openCodeInRealCoder(fileName: string, code: string) {
+    this.pendingCoderFile.set({ fileName, code });
+    this.setView('coder');
   }
 
   selectLesson(moduleId: string, lessonId: string) {

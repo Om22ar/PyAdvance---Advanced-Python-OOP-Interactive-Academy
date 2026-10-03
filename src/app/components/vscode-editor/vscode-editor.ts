@@ -48,6 +48,19 @@ export interface FolderNode {
   files: { path: string; name: string; size: number }[];
 }
 
+export interface ExplorerTreeNode {
+  kind: 'folder' | 'file';
+  path: string;
+  name: string;
+  parentPath: string;
+  depth: number;
+  size: number;
+  childFoldersCount: number;
+  childFilesCount: number;
+  isExpanded: boolean;
+  isEntryFile: boolean;
+}
+
 export type IdePaletteId =
   | 'dracula'
   | 'nord'
@@ -201,6 +214,394 @@ export const IDE_COLOR_PALETTES: IdeColorPalette[] = [
 ];
 
 const DEFAULT_PROJECTS: IdeProject[] = [
+  {
+    id: 'lec2-functions-oop-pdf',
+    name: 'lec2-functions-oop-pdf',
+    description: 'جميع أمثلة ومصطلحات محاضرة pythonfuncbuiltandopplec2.pdf',
+    entryFile: '01_args_kwargs.py',
+    folders: ['lec2_examples'],
+    updatedAt: 'Just now',
+    files: {
+      '01_args_kwargs.py': `"""
+pythonfuncbuiltandopplec2.pdf — 1. استخدامات *args و **kwargs
+"""
+
+print("=== 1. استقبال وسائط غير مسماة *args (مثال 1) ===")
+def myFun(*args):
+    for arg in args:
+        print(arg)
+
+myFun('Hello', 'Welcome', 'to', 'PYTHON')
+
+print("\\n=== 2. دمج وسيط عادي مع *args (مثال 2) ===")
+def fun_args(arg1, *argv):
+    print("First argument :", arg1)
+    for arg in argv:
+        print("Argument *argv :", arg)
+
+fun_args('Hello', 'Welcome', 'to', 'python')
+
+print("\\n=== 3. استقبال وسائط مسماة **kwargs (مثال 1) ===")
+def fun_kwargs(**kwargs):
+    for k, val in kwargs.items():
+        print("%s == %s" % (k, val))
+
+fun_kwargs(s1='A', s2='B', s3='c')
+
+print("\\n=== 4. دمج وسيط عادي مع **kwargs (مثال 2) ===")
+def fun_arg_kwargs(arg1, **kwargs):
+    for k, val in kwargs.items():
+        print("%s == %s" % (k, val))
+
+fun_arg_kwargs("Hi", s1='students ', s2='of', s3='python')
+
+print("\\n=== 5. الدمج بين *args و **kwargs ومعامل عادي ===")
+def profile(role, *args, **kwargs):
+    print("Role:", role)
+    print("Args:", args)
+    print("Kwargs:", kwargs)
+
+profile("Developer", "Python", "Django", level="Senior", remote=True)
+`,
+      '02_lambda_functions.py': `"""
+pythonfuncbuiltandopplec2.pdf — 2. دوال لامبدا (Lambda Functions)
+"""
+
+# 1. دالة جمع بسيطة
+add = lambda x, y: x + y
+print("add(3, 5) =", add(3, 5))  # Output: 8
+
+# 2. دالة فحص قوة كلمة المرور
+is_strong = lambda password: len(password) >= 8
+print("is_strong('admin123')  :", is_strong("admin123"))   # True/False
+print("is_strong('Secr3tKey!'):", is_strong("Secr3tKey!")) # True
+
+# 3. الممارسات الأفضل (مقارنة بين تعقيد Lambda و استخدام def)
+# ممارسة غير جيدة — تعقيد زائد على دالة lambda
+process_lambda = lambda x: x**2 + 5 if x > 10 else x - 1
+
+# الأسلوب الأفضل بـ def لزيادة وضوح الكود:
+def process(x):
+    if x > 10:
+        return x**2 + 5
+    else:
+        return x - 1
+
+print("process(12) =", process(12))
+print("process(5)  =", process(5))
+`,
+      '03_oop_basics_variables.py': `"""
+pythonfuncbuiltandopplec2.pdf — 3. أساسيات الكائنات ومتغيرات الفئات (OOP Concepts)
+"""
+
+# 1. تعريف فئة بسيطة واستخدام self
+class Person:
+    def __init__(self, name):
+        self.name = name
+
+    def greet(self):
+        print("Hello, my name is", self.name)
+
+p = Person("Ali")
+p.greet()
+
+# 2. الفرق بين المتغير المحلي والمتغير التابع للكائن (self)
+class CarSpeed:
+    def set_speed(self, speed):
+        temp_speed = speed  # متغير محلي (Local Variable)
+        self.speed = speed  # متغير الكائن (Instance Variable)
+
+    def print_speed(self):
+        print(f"Speed is {self.speed}")
+
+car = CarSpeed()
+car.set_speed(60)
+car.print_speed()  # Output: Speed is 60
+
+# 3. الفرق بين متغير الفئة ومتغيرات الكائن
+class Car:
+    wheels = 4  # متغير فئة (Class Variable)
+
+    def __init__(self, brand, speed):
+        self.brand = brand   # متغير كائن
+        self.speed = speed   # متغير كائن
+
+    def info(self):
+        print(f"{self.brand} runs at {self.speed} km/h")
+
+car1 = Car("Toyota", 180)
+car1.info()
+`,
+      '04_inheritance_types.py': `"""
+pythonfuncbuiltandopplec2.pdf — 4. أنواع الوراثة المختلفة (Inheritance Types)
+"""
+
+print("=== 1. الوراثة الأحادية (Single Inheritance) ===")
+class SecurityTool:
+    def scan(self):
+        print("Scanning...")
+
+class Antivirus(SecurityTool):
+    pass
+
+av = Antivirus()
+av.scan()
+
+print("\\n=== 2. الوراثة المتعددة (Multiple Inheritance) ===")
+class Encryptor:
+    def encrypt(self):
+        print("Encrypting...")
+
+class Decryptor:
+    def decrypt(self):
+        print("Decrypting...")
+
+class Cipher(Encryptor, Decryptor):
+    pass
+
+tool = Cipher()
+tool.encrypt()
+tool.decrypt()
+
+print("\\n=== 3. الوراثة متعددة المستويات (Multilevel Inheritance) ===")
+class Tool:
+    def info(self):
+        print("Basic Tool")
+
+class Scanner(Tool):
+    def scan(self):
+        print("Scanning...")
+
+class AdvancedScanner(Scanner):
+    def deep_scan(self):
+        print("Deep scanning...")
+
+adv = AdvancedScanner()
+adv.info()
+adv.scan()
+adv.deep_scan()
+
+print("\\n=== 4. استخدام الكلمة المفتاحية super() ===")
+class Parent:
+    def greet(self):
+        print("Hello from Parent")
+
+class Child(Parent):
+    def greet(self):
+        super().greet()
+        print("Hello from Child")
+
+c = Child()
+c.greet()
+
+print("\\n=== 5. تجاوز الطرق (Method Overriding) ===")
+class Firewall:
+    def block(self):
+        print("Blocking traffic")
+
+class CustomFirewall(Firewall):
+    def block(self):
+        print("Custom block rules")
+
+fw = CustomFirewall()
+fw.block()  # Output: Custom block rules
+`,
+      '05_polymorphism_mro_diamond.py': `"""
+pythonfuncbuiltandopplec2.pdf — 5. التعددية ومشكلة الماسة (Polymorphism & MRO)
+"""
+
+print("=== 1. تعدد الأشكال القائم على Duck Typing ===")
+class Firewall:
+    def block(self):
+        print("Blocking suspicious IP")
+
+class Antivirus:
+    def block(self):
+        print("Quarantining malicious file")
+
+def perform_block(tool):
+    tool.block()
+
+perform_block(Firewall())   # Output: Blocking suspicious IP
+perform_block(Antivirus())  # Output: Quarantining malicious file
+
+print("\\n=== 2. تعدد الأشكال بفرض واجهة مشتركة ===")
+class SecurityTool:
+    def analyze(self):
+        raise NotImplementedError("Subclass must implement analyze()")
+
+class PortScanner(SecurityTool):
+    def analyze(self):
+        print("Scanning open ports...")
+
+class MalwareScanner(SecurityTool):
+    def analyze(self):
+        print("Analyzing file for malware...")
+
+class PacketSniffer(SecurityTool):
+    def analyze(self):
+        print("Sniffing network packets...")
+
+tools = [PortScanner(), MalwareScanner(), PacketSniffer()]
+for tool in tools:
+    tool.analyze()
+
+print("\\n=== 3. مشكلة الماسة وتسلسل MRO ===")
+class A:
+    def say(self):
+        print("A")
+
+class B(A):
+    def say(self):
+        print("B")
+
+class C(A):
+    def say(self):
+        print("C")
+
+class D(B, C):
+    pass
+
+d = D()
+d.say()  # Output: B
+print("D.mro():", D.mro())
+
+print("\\n=== 4. تتبع الـ MRO عند استخدام super() عبر شجرة الماسة ===")
+class A2:
+    def say(self):
+        print("A")
+
+class B2(A2):
+    def say(self):
+        print("B")
+        super().say()
+
+class C2(A2):
+    def say(self):
+        print("C")
+        super().say()
+
+class D2(B2, C2):
+    def say(self):
+        print("D")
+        super().say()
+
+d2 = D2()
+d2.say()
+`,
+      '06_abc_composition_dunder.py': `"""
+pythonfuncbuiltandopplec2.pdf — 6. الفئات المجردة والتركيب والدوال السحرية
+"""
+from abc import ABC, abstractmethod
+
+print("=== 1. الفئات المجردة عبر وحدات abc ===")
+class SecurityTool(ABC):
+    @abstractmethod
+    def scan(self):
+        pass
+
+class FirewallTool(SecurityTool):
+    def scan(self):
+        print("Scanning network ports for suspicious activity")
+
+class AntivirusTool(SecurityTool):
+    def scan(self):
+        print("Scanning files for malware")
+
+firewall = FirewallTool()
+firewall.scan()
+
+antivirus = AntivirusTool()
+antivirus.scan()
+
+print("\\n=== 2. التركيب التفويضي (Composition - 'Has-A') ===")
+class PortScanner:
+    def scan(self):
+        print("Scanning open ports...")
+
+class MalwareScanner:
+    def scan(self):
+        print("Scanning files for malware...")
+
+class SecuritySuite:
+    def __init__(self):
+        self.port_scanner = PortScanner()
+        self.malware_scanner = MalwareScanner()
+
+    def full_scan(self):
+        self.port_scanner.scan()
+        self.malware_scanner.scan()
+
+suite = SecuritySuite()
+suite.full_scan()
+
+print("\\n=== 3. مرونة التركيب باستبدال المكونات المضمنة ===")
+class VulnerabilityScanner:
+    def scan(self):
+        print("Scanning vulnerabilities...")
+
+suite2 = SecuritySuite()
+suite2.port_scanner = VulnerabilityScanner()  # استبدال فاحص المنافذ بفاحص الثغرات
+suite2.full_scan()
+
+print("\\n=== 4. استخدام الدوال السحرية (Dunder Methods) ===")
+class Firewall:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return f"Firewall: {self.name}"
+
+fw = Firewall("MyFirewall")
+print(fw)  # يستدعي تلقائياً fw.__str__()؛ المخرجات: Firewall: MyFirewall
+`,
+      'TERMS_AR_EN.md': `# جدول المصطلحات الإنجليزية وتعاريفها باللغة العربية (pythonfuncbuiltandopplec2.pdf)
+
+| المصطلح بالإنجليزية (English Term) | الترجمة والمعنى بالعربية |
+| :--- | :--- |
+| **Functions** | **الدوال:** كتل برمجية قابلة لإعادة الاستخدام لتنفيذ مهام محددة. |
+| **Built-in Functions** | **الدوال المدمجة:** دوال جاهزة متوفرة في لغة بايثون مباشرة. |
+| **Function Arguments** | **وسائط الدالة:** القيم والمصطلحات الممررة للدالة عند الاستدعاء. |
+| **Positional Arguments** | **الوسائط الموقعية:** وسائط تُطابق قيمها بناءً على ترتيبها في الاستدعاء. |
+| **Keyword Arguments** | **الوسائط المسماة:** وسائط تُمرر بصيغة \`key=value\` لتحديد اسم المتغير. |
+| **Default Arguments** | **الوسائط الافتراضية:** قيم تُحدد مسبقاً للمعاملات في حال عدم تمريرها. |
+| **Variable-length Arguments (\`*args\`, \`**kwargs\`)** | **الوسائط متغيرة الطول:** آليات استقبال عدد غير محدد من المدخلات. |
+| **Non-keyworded Arguments (\`*args\`)** | **وسائط غير مسماة:** تُجمع في صف **\`Tuple\`**. |
+| **Keyworded Arguments (\`**kwargs\`)** | **وسائط مسماة:** تُجمع في قاموس **\`Dictionary\`**. |
+| **Lambda Function / Anonymous Function** | **دالة لامبدا / دالة مجهولة:** دالة صغيرة وبسيطة تُعرّف بدون اسم وسريعة التنفيذ. |
+| **Inline Function / Throwaway Function** | **دالة مضمنة / مؤقتة:** تُستخدم لمرة واحدة أو كـ Argument مباشر. |
+| **Object-Oriented Programming (OOP)** | **البرمجة كائنية التوجه:** نمط برمجي يعتمد على الفئات والكائنات. |
+| **Class** | **الفئة / الصنف:** المخطط الهيكلي الأساسي لبناء الكائنات. |
+| **Instance / Object** | **الكائن / النسخة:** كائن فعلي مستخرج ومبني من الفئة. |
+| **Method** | **الطريقة:** دالة مُعرفة داخل الفئة لتعبر عن سلوك الكائن. |
+| **\`self\` Reference** | **المرجع \`self\`:** مرجع يشير إلى نسخة الكائن الحالية لتصل للخصائص والدوال. |
+| **Local Variable** | **متغير محلي:** متغير يعيش فقط داخل النطاق المؤقت للدالة. |
+| **Instance Variable** | **متغير الكائن:** متغير يتبع كائناً محدداً وتختلف قيمته من كائن لآخر. |
+| **Class Variable** | **متغير الفئة:** متغير مشاع ومشارك بين جميع نسخ الكائنات. |
+| **Inheritance** | **الوراثة:** نقل الخصائص والطرق من فئة أب إلى فئة ابن. |
+| **Subclass / Child Class** | **الفئة الفرعية / الابنة:** الفئة التي ترث الخصائص من الفئة الأعلى. |
+| **Superclass / Parent Class** | **الفئة الأساسية / الأب:** الفئة الأم التي تُورث الخصائص. |
+| **Single Inheritance** | **وراثة أحادية:** فئة ابن ترث من فئة أب واحدة. |
+| **Multiple Inheritance** | **وراثة متعددة:** فئة ابن ترث من عدة فئات آباء. |
+| **Multilevel Inheritance** | **وراثة متعددة المستويات:** وراثية متسلسلة (ابن ← أب ← جد). |
+| **Hierarchical Inheritance** | **وراثة هرمية:** عدة فئات أبناء يرثون من نفس الفئة الأب. |
+| **\`super()\` Keyword** | **الكلمة المفتاحية \`super\`:** تُستخدم لاستدعاء طرق الفئة الأب من الفئة الابنة. |
+| **Method Overriding** | **إعادة كتابة / تجاوز الطرق:** تعديل الفئة الابنة لسلوك طريقة موروثة من الأب. |
+| **Polymorphism** | **تعدد الأشكال (التعددية):** واجهة واحدة لاستدعاء طرق تنفيذية مختلفة. |
+| **Duck Typing** | **التنميط المرن (Duck Typing):** فلسفة بايثون "إذا كان يمتلك الطريقة، فنفذها دون الاشتراط بوراثة رسمية". |
+| **Diamond Problem** | **مشكلة الماسة:** غموض استدعاء الطرق عند وراثة فئة من فئتين تتبعان نفس الأب. |
+| **Method Resolution Order (MRO)** | **ترتيب حل الطرق:** التسلسل الخوارزمي الذي تتبعه بايثون للبحث عن الطرق. |
+| **C3 Linearization Algorithm** | **خوارزمية C3 الخطية:** الخوارزمية المستخدمة لحساب مسار الـ MRO. |
+| **Abstract Class** | **فئة مجردة:** فئة بمثابة هيكل ولا يمكن إنشاء كائنات مباشرة منها. |
+| **\`@abstractmethod\` Decorator** | **مُزخرف الطرق المجردة:** يُجبر الفئات الابنة على إعادة تنفيذ الطريقة. |
+| **Composition ("Has-a")** | **التركيب / الاحتواء:** تضمين كائنات من فئات أخرى كخصائص داخل الفئة. |
+| **Delegation** | **التفويض:** تفويض الفئة المهام التنفيذية للكائنات المركبة داخلها. |
+| **Single Responsibility Principle** | **مبدأ المسؤولية المنفردة:** أن تكون الفئة مخصصة لتأدية وظيفة واحدة فقط بوضوح. |
+| **Dunder Methods / Magic Methods** | **الدوال السحرية:** طرق بأسماء محاطة بتسطير مزدوج \`__method__\` لتخصيص سلوك بايثون المدمج. |
+| **Operator Overloading** | **تحميل العوامل الإضافي:** تخصيص عمل المعاملات (مثل \`+\`, \`==\`) مع الكائنات. |
+`,
+    },
+  },
   {
     id: 'cyber-sec-suite',
     name: 'cyber-sec-suite',
@@ -588,67 +989,118 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
 
       <!-- ================= MAIN WORKSPACE AREA ================= -->
       <div class="flex-1 flex min-h-0 overflow-hidden">
-        <!-- LEFT SIDEBAR: PROJECT FILES & FOLDERS EXPLORER -->
+        <!-- LEFT SIDEBAR: HIERARCHICAL PROJECT FILES & FOLDERS EXPLORER -->
         @if (isExplorerOpen()) {
           <aside
             [style.background-color]="activePalette().sidebarBg"
             [style.border-color]="activePalette().border"
-            class="w-64 sm:w-72 border-r flex flex-col shrink-0 min-h-0 transition-colors duration-150">
-            <!-- Explorer Header & File/Folder Creation Actions -->
-            <div class="px-3 py-2.5 border-b border-slate-800/80 flex items-center justify-between">
+            class="w-64 sm:w-76 border-r flex flex-col shrink-0 min-h-0 transition-colors duration-150">
+            <!-- Explorer Header & Project / Tree Actions -->
+            <div class="px-3 py-2 border-b border-slate-800/80 flex items-center justify-between gap-1">
               <div class="flex items-center gap-1.5 min-w-0">
-                <mat-icon class="text-sm text-teal-400 leading-none">folder_special</mat-icon>
-                <span class="text-xs font-bold text-slate-200 truncate">{{ activeProject().name }}</span>
+                <mat-icon class="text-sm text-teal-400 leading-none shrink-0">account_tree</mat-icon>
+                @if (isRenamingProject()) {
+                  <input
+                    type="text"
+                    aria-label="Rename active project"
+                    [value]="projectRenameInput()"
+                    (input)="onProjectRenameInput($event)"
+                    (keydown.enter)="confirmRenameProject()"
+                    (keydown.escape)="cancelRenameProject()"
+                    class="w-32 px-1.5 py-0.5 rounded bg-[#060B0E] border border-teal-500/60 text-xs font-mono text-white focus:outline-none" />
+                } @else {
+                  <span
+                    tabindex="0"
+                    role="button"
+                    (dblclick)="startRenamingProject()"
+                    (keydown.enter)="startRenamingProject()"
+                    title="Project: {{ activeProject().name }} (Double-click to rename)"
+                    class="text-xs font-bold text-slate-200 truncate cursor-pointer hover:text-teal-300">
+                    {{ activeProject().name }}
+                  </span>
+                }
               </div>
 
-              <div class="flex items-center gap-1 shrink-0">
+              <div class="flex items-center gap-0.5 shrink-0">
                 <button
                   type="button"
-                  (click)="startCreatingItem('file', selectedFolderTarget())"
-                  title="New File in selected folder (Alt+N)"
-                  class="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-colors flex items-center">
-                  <mat-icon class="text-base leading-none">note_add</mat-icon>
+                  (click)="startRenamingProject()"
+                  title="Rename Project"
+                  class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-colors flex items-center">
+                  <mat-icon class="text-xs leading-none">edit</mat-icon>
                 </button>
                 <button
                   type="button"
-                  (click)="startCreatingItem('folder', selectedFolderTarget())"
-                  title="New Folder in project (Alt+Shift+N)"
-                  class="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-colors flex items-center">
-                  <mat-icon class="text-base leading-none">create_new_folder</mat-icon>
+                  (click)="expandAllFolders()"
+                  title="Expand All Folders"
+                  class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-colors flex items-center">
+                  <mat-icon class="text-sm leading-none">unfold_more</mat-icon>
+                </button>
+                <button
+                  type="button"
+                  (click)="collapseAllFolders()"
+                  title="Collapse All Folders"
+                  class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-colors flex items-center">
+                  <mat-icon class="text-sm leading-none">unfold_less</mat-icon>
                 </button>
                 <button
                   type="button"
                   (click)="downloadProjectBundle()"
                   title="Download active Python script"
                   class="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-colors flex items-center">
-                  <mat-icon class="text-base leading-none">download</mat-icon>
+                  <mat-icon class="text-sm leading-none">download</mat-icon>
                 </button>
               </div>
             </div>
 
-            <!-- Quick Create File / Folder Action Bar -->
-            <div class="px-2.5 py-2 border-b border-slate-800/60 bg-[#081015] flex items-center gap-1.5">
-              <button
-                type="button"
-                (click)="startCreatingItem('file', selectedFolderTarget())"
-                class="flex-1 py-1 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors whitespace-nowrap">
-                <mat-icon class="text-xs leading-none text-teal-400">add</mat-icon>
-                <span>New File</span>
-              </button>
-              <button
-                type="button"
-                (click)="startCreatingItem('folder', selectedFolderTarget())"
-                class="flex-1 py-1 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors whitespace-nowrap">
-                <mat-icon class="text-xs leading-none text-amber-400">create_new_folder</mat-icon>
-                <span>New Folder</span>
-              </button>
+            <!-- Quick Create File / Folder Action Bar + Filter Input -->
+            <div class="p-2 border-b border-slate-800/60 bg-black/20 space-y-1.5">
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="startCreatingItem('file', selectedFolderTarget())"
+                  title="Create New File in {{ selectedFolderTarget() ? selectedFolderTarget() + '/' : 'Root /' }} (Alt+N)"
+                  class="flex-1 py-1 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors whitespace-nowrap">
+                  <mat-icon class="text-xs leading-none text-teal-400">note_add</mat-icon>
+                  <span>New File</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="startCreatingItem('folder', selectedFolderTarget())"
+                  title="Create New Folder in {{ selectedFolderTarget() ? selectedFolderTarget() + '/' : 'Root /' }} (Alt+Shift+N)"
+                  class="flex-1 py-1 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors whitespace-nowrap">
+                  <mat-icon class="text-xs leading-none text-amber-400">create_new_folder</mat-icon>
+                  <span>New Folder</span>
+                </button>
+              </div>
+
+              <!-- Explorer Search / Filter Input -->
+              <div class="relative flex items-center">
+                <mat-icon class="text-xs text-slate-500 absolute left-2 pointer-events-none">search</mat-icon>
+                <input
+                  type="text"
+                  aria-label="Filter files and folders in explorer"
+                  [value]="explorerFilterQuery()"
+                  (input)="onExplorerFilterInput($event)"
+                  placeholder="Filter hierarchy (files &amp; folders)..."
+                  class="w-full pl-6 pr-6 py-1 rounded-lg bg-[#060B0E]/90 border border-slate-800 text-[11px] font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-teal-500/50" />
+                @if (explorerFilterQuery()) {
+                  <button
+                    type="button"
+                    (click)="clearExplorerFilter()"
+                    title="Clear filter"
+                    class="absolute right-1.5 text-slate-400 hover:text-slate-200 flex items-center">
+                    <mat-icon class="text-xs leading-none">close</mat-icon>
+                  </button>
+                }
+              </div>
             </div>
 
             <!-- Inline File/Folder Creator Form -->
             @if (creationMode(); as mode) {
               <div class="p-2.5 bg-[#0E1B24] border-b border-teal-500/40 space-y-2">
                 <div class="flex items-center justify-between text-[11px]">
-                  <span class="font-semibold text-teal-300">
+                  <span class="font-semibold text-teal-300 truncate">
                     New {{ mode === 'file' ? 'File' : 'Folder' }}
                     {{ creationParentFolder() ? 'in ' + creationParentFolder() + '/' : 'in Root /' }}
                   </span>
@@ -667,13 +1119,13 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
                     (input)="onNewItemNameInput($event)"
                     (keydown.enter)="confirmCreateItem()"
                     (keydown.escape)="cancelCreateItem()"
-                    [placeholder]="mode === 'file' ? 'e.g. module.py or utils/helper.py' : 'e.g. controllers or services/auth'"
-                    class="flex-1 px-2 py-1 rounded bg-[#060B0E] border border-teal-500/50 text-xs font-mono text-white focus:outline-none" />
+                    [placeholder]="mode === 'file' ? 'e.g. module.py or sub/helper.py' : 'e.g. controllers or core/auth'"
+                    class="flex-1 px-2 py-1 rounded bg-[#060B0E] border border-teal-500/50 text-xs font-mono text-white focus:outline-none min-w-0" />
                   <button
                     type="button"
                     (click)="confirmCreateItem()"
-                    class="px-2.5 py-1 rounded bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs">
-                    Add
+                    class="px-2.5 py-1 rounded bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shrink-0">
+                    Create
                   </button>
                 </div>
                 @if (creationError()) {
@@ -682,149 +1134,220 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
               </div>
             }
 
-            <!-- Hierarchical Folder & File Tree -->
-            <div class="flex-1 overflow-y-auto p-2 space-y-1 text-xs">
+            <!-- Inline Delete Confirmation Banner (Safe Non-Modal Confirmation) -->
+            @if (pendingDeleteTarget(); as delTarget) {
+              <div class="p-2.5 bg-rose-950/60 border-b border-rose-500/40 space-y-2 text-xs">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="space-y-0.5 min-w-0">
+                    <div class="font-bold text-rose-300 flex items-center gap-1">
+                      <mat-icon class="text-xs leading-none">warning</mat-icon>
+                      <span>Delete {{ delTarget.kind === 'folder' ? 'Folder' : 'File' }}?</span>
+                    </div>
+                    <div class="font-mono text-[11px] text-rose-200 truncate" [title]="delTarget.path">
+                      {{ delTarget.path }}{{ delTarget.kind === 'folder' ? '/' : '' }}
+                    </div>
+                    @if (delTarget.kind === 'folder') {
+                      <div class="text-[10px] text-rose-300/80">
+                        Removes folder &amp; {{ delTarget.affectedFilesCount }} nested file(s)
+                      </div>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    (click)="cancelDeleteItem()"
+                    class="text-rose-300 hover:text-white shrink-0">
+                    <mat-icon class="text-xs leading-none">close</mat-icon>
+                  </button>
+                </div>
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    type="button"
+                    (click)="cancelDeleteItem()"
+                    class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold">
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    (click)="confirmDeleteItem()"
+                    class="px-2.5 py-1 rounded bg-rose-500 hover:bg-rose-400 text-slate-950 text-[11px] font-bold">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            }
+
+            <!-- True Hierarchical Folder & File Explorer Tree -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-0.5 text-xs">
               <!-- Root Directory Selector Row -->
               <div
                 tabindex="0"
                 role="button"
-                (click)="selectedFolderTarget.set('')"
-                (keydown.enter)="selectedFolderTarget.set('')"
-                [class]="selectedFolderTarget() === ''
-                  ? 'px-2 py-1 rounded-lg bg-slate-800/50 text-slate-200 flex items-center justify-between cursor-pointer'
-                  : 'px-2 py-1 rounded-lg text-slate-400 hover:bg-slate-800/30 flex items-center justify-between cursor-pointer'">
-                <div class="flex items-center gap-1.5 font-mono text-[11px]">
+                (click)="selectRootTarget()"
+                (keydown.enter)="selectRootTarget()"
+                [class]="selectedFolderTarget() === '' && activeExplorerItemPath() === ''
+                  ? 'px-2 py-1.5 rounded-lg bg-teal-500/15 text-teal-300 border border-teal-500/30 flex items-center justify-between cursor-pointer'
+                  : 'px-2 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800/40 flex items-center justify-between cursor-pointer'">
+                <div class="flex items-center gap-1.5 font-mono text-[11px] min-w-0">
                   <mat-icon class="text-xs leading-none text-teal-400">home</mat-icon>
-                  <span>/ (Project Root)</span>
+                  <span class="truncate">/ ({{ activeProject().name }})</span>
                 </div>
-                <span class="text-[10px] text-slate-500 tabular-nums">{{ totalProjectFilesCount() }} files</span>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="text-[10px] text-slate-500 tabular-nums">
+                    {{ totalProjectFoldersCount() }}d · {{ totalProjectFilesCount() }}f
+                  </span>
+                </div>
               </div>
 
-              <!-- Folders and Their Files -->
-              @for (folder of folderTree(); track folder.path) {
-                <div class="space-y-0.5">
+              <!-- Recursive Flattened Visible Hierarchy Nodes -->
+              @for (node of visibleExplorerNodes(); track node.kind + ':' + node.path) {
+                @if (renamingTarget()?.path === node.path && renamingTarget()?.kind === node.kind) {
+                  <!-- Inline Rename Editor for File or Folder -->
+                  <div
+                    [style.margin-left.px]="8 + node.depth * 14"
+                    class="p-1.5 rounded-lg bg-[#0E1B24] border border-teal-500/60 space-y-1">
+                    <div class="flex items-center justify-between text-[10px] text-teal-300 font-semibold">
+                      <span>Rename {{ node.kind === 'folder' ? 'Folder' : 'File' }}</span>
+                      <span class="font-mono text-slate-400 truncate max-w-[110px]">{{ node.path }}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <input
+                        type="text"
+                        aria-label="Rename file or folder input"
+                        [value]="renameInputValue()"
+                        (input)="onRenameInput($event)"
+                        (keydown.enter)="confirmRenameItem()"
+                        (keydown.escape)="cancelRenameItem()"
+                        class="flex-1 px-1.5 py-0.5 rounded bg-[#060B0E] border border-teal-500/50 text-xs font-mono text-white focus:outline-none min-w-0" />
+                      <button
+                        type="button"
+                        (click)="confirmRenameItem()"
+                        title="Save new name (Enter)"
+                        class="px-2 py-0.5 rounded bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-[11px] shrink-0">
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        (click)="cancelRenameItem()"
+                        title="Cancel rename (Esc)"
+                        class="p-0.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white shrink-0">
+                        <mat-icon class="text-xs leading-none">close</mat-icon>
+                      </button>
+                    </div>
+                    @if (renameError()) {
+                      <div class="text-[10px] text-rose-400">{{ renameError() }}</div>
+                    }
+                  </div>
+                } @else if (node.kind === 'folder') {
+                  <!-- Hierarchical Folder Row -->
                   <div
                     tabindex="0"
                     role="button"
-                    (click)="toggleFolderCollapse(folder.path)"
-                    (keydown.enter)="toggleFolderCollapse(folder.path)"
-                    [style.padding-left.px]="8 + folder.depth * 12"
-                    [class]="selectedFolderTarget() === folder.path
-                      ? 'group py-1.5 pr-2 rounded-lg bg-teal-500/15 text-teal-300 border border-teal-500/30 flex items-center justify-between cursor-pointer transition-colors'
-                      : 'group py-1.5 pr-2 rounded-lg hover:bg-slate-800/60 text-slate-300 flex items-center justify-between cursor-pointer transition-colors'">
+                    (click)="toggleFolderCollapse(node.path)"
+                    (keydown.enter)="toggleFolderCollapse(node.path)"
+                    (keydown.f2)="startRenamingFromKeyboard($event, 'folder', node.path, node.name)"
+                    [style.padding-left.px]="8 + node.depth * 14"
+                    [class]="selectedFolderTarget() === node.path
+                      ? 'group py-1.5 pr-1.5 rounded-lg bg-teal-500/15 text-teal-300 border border-teal-500/30 flex items-center justify-between cursor-pointer transition-colors'
+                      : 'group py-1.5 pr-1.5 rounded-lg hover:bg-slate-800/60 text-slate-300 flex items-center justify-between cursor-pointer transition-colors'">
                     <div class="flex items-center gap-1.5 min-w-0">
-                      <mat-icon class="text-xs leading-none text-slate-400">
-                        {{ isFolderCollapsed(folder.path) ? 'chevron_right' : 'expand_more' }}
+                      <mat-icon class="text-xs leading-none text-slate-400 shrink-0">
+                        {{ node.isExpanded ? 'expand_more' : 'chevron_right' }}
                       </mat-icon>
-                      <mat-icon class="text-sm leading-none text-amber-400">
-                        {{ isFolderCollapsed(folder.path) ? 'folder' : 'folder_open' }}
+                      <mat-icon class="text-sm leading-none text-amber-400 shrink-0">
+                        {{ node.isExpanded ? 'folder_open' : 'folder' }}
                       </mat-icon>
-                      <span class="font-medium truncate">{{ folder.name }}</span>
+                      <span class="font-medium truncate" [title]="node.path + '/'">{{ node.name }}</span>
+                      <span class="text-[10px] text-slate-500 tabular-nums group-hover:hidden">
+                        ({{ node.childFoldersCount + node.childFilesCount }})
+                      </span>
                     </div>
 
-                    <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
                       <button
                         type="button"
-                        (click)="startCreatingItemFromTree($event, 'file', folder.path)"
-                        title="Create file inside {{ folder.path }}/"
+                        (click)="startCreatingItemFromTree($event, 'file', node.path)"
+                        title="New File inside {{ node.path }}/"
                         class="p-0.5 rounded hover:bg-slate-700 text-slate-300 hover:text-teal-300">
                         <mat-icon class="text-xs leading-none">note_add</mat-icon>
                       </button>
                       <button
                         type="button"
-                        (click)="startCreatingItemFromTree($event, 'folder', folder.path)"
-                        title="Create subfolder inside {{ folder.path }}/"
+                        (click)="startCreatingItemFromTree($event, 'folder', node.path)"
+                        title="New Subfolder inside {{ node.path }}/"
                         class="p-0.5 rounded hover:bg-slate-700 text-slate-300 hover:text-amber-300">
                         <mat-icon class="text-xs leading-none">create_new_folder</mat-icon>
                       </button>
                       <button
                         type="button"
-                        (click)="deleteFolder($event, folder.path)"
-                        title="Delete folder {{ folder.path }}/"
+                        (click)="startRenamingItem($event, 'folder', node.path, node.name)"
+                        title="Rename folder {{ node.path }}/ (F2)"
+                        class="p-0.5 rounded hover:bg-slate-700 text-slate-300 hover:text-sky-300">
+                        <mat-icon class="text-xs leading-none">edit</mat-icon>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="requestDeleteFolder($event, node.path)"
+                        title="Delete folder {{ node.path }}/"
                         class="p-0.5 rounded hover:bg-slate-700 text-slate-400 hover:text-rose-400">
                         <mat-icon class="text-xs leading-none">delete</mat-icon>
                       </button>
                     </div>
                   </div>
-
-                  <!-- Files inside this folder -->
-                  @if (!isFolderCollapsed(folder.path)) {
-                    @for (file of folder.files; track file.path) {
-                      <div
-                        tabindex="0"
-                        role="button"
-                        (click)="openFile(file.path)"
-                        (keydown.enter)="openFile(file.path)"
-                        [style.padding-left.px]="24 + folder.depth * 12"
-                        [class]="activeFilePath() === file.path
-                          ? 'group py-1.5 pr-2 rounded-lg bg-teal-500/20 text-white font-semibold border-l-2 border-teal-400 flex items-center justify-between cursor-pointer transition-colors'
-                          : 'group py-1.5 pr-2 rounded-lg hover:bg-slate-800/50 text-slate-300 flex items-center justify-between cursor-pointer transition-colors'">
-                        <div class="flex items-center gap-1.5 min-w-0">
-                          <mat-icon [class]="getFileIconClass(file.name)" class="text-sm leading-none shrink-0">
-                            {{ getFileIcon(file.name) }}
-                          </mat-icon>
-                          <span class="font-mono text-xs truncate">{{ file.name }}</span>
-                        </div>
-                        <div class="flex items-center gap-1 shrink-0">
-                          <span class="text-[10px] text-slate-500 tabular-nums group-hover:hidden">{{ file.size }}B</span>
-                          <div class="hidden group-hover:flex items-center gap-0.5">
-                            @if (file.name.endsWith('.py')) {
-                              <button
-                                type="button"
-                                (click)="runSpecificFile($event, file.path)"
-                                title="Run {{ file.path }}"
-                                class="p-0.5 rounded hover:bg-slate-700 text-emerald-400">
-                                <mat-icon class="text-xs leading-none">play_arrow</mat-icon>
-                              </button>
-                            }
-                            <button
-                              type="button"
-                              (click)="deleteFile($event, file.path)"
-                              title="Delete {{ file.path }}"
-                              class="p-0.5 rounded hover:bg-slate-700 text-slate-400 hover:text-rose-400">
-                              <mat-icon class="text-xs leading-none">delete</mat-icon>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    }
-                  }
-                </div>
-              }
-
-              <!-- Root-Level Files -->
-              <div class="pt-1 space-y-0.5">
-                @for (file of rootFiles(); track file.path) {
+                } @else {
+                  <!-- Hierarchical File Row -->
                   <div
                     tabindex="0"
                     role="button"
-                    (click)="openFile(file.path)"
-                    (keydown.enter)="openFile(file.path)"
-                    [class]="activeFilePath() === file.path
-                      ? 'group px-2.5 py-1.5 rounded-lg bg-teal-500/20 text-white font-semibold border-l-2 border-teal-400 flex items-center justify-between cursor-pointer transition-colors'
-                      : 'group px-2.5 py-1.5 rounded-lg hover:bg-slate-800/50 text-slate-300 flex items-center justify-between cursor-pointer transition-colors'">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <mat-icon [class]="getFileIconClass(file.name)" class="text-sm leading-none shrink-0">
-                        {{ getFileIcon(file.name) }}
+                    (click)="openFile(node.path)"
+                    (keydown.enter)="openFile(node.path)"
+                    (keydown.f2)="startRenamingFromKeyboard($event, 'file', node.path, node.name)"
+                    [style.padding-left.px]="12 + node.depth * 14"
+                    [class]="activeFilePath() === node.path
+                      ? 'group py-1.5 pr-1.5 rounded-lg bg-teal-500/20 text-white font-semibold border-l-2 border-teal-400 flex items-center justify-between cursor-pointer transition-colors'
+                      : 'group py-1.5 pr-1.5 rounded-lg hover:bg-slate-800/50 text-slate-300 flex items-center justify-between cursor-pointer transition-colors'">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <mat-icon [class]="getFileIconClass(node.name)" class="text-sm leading-none shrink-0">
+                        {{ getFileIcon(node.name) }}
                       </mat-icon>
-                      <span class="font-mono text-xs truncate">{{ file.name }}</span>
+                      <span class="font-mono text-xs truncate" [title]="node.path">{{ node.name }}</span>
+                      @if (node.isEntryFile) {
+                        <span
+                          title="Project Entry Script"
+                          class="px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-mono uppercase shrink-0">
+                          entry
+                        </span>
+                      }
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
-                      <span class="text-[10px] text-slate-500 tabular-nums group-hover:hidden">{{ file.size }}B</span>
-                      <div class="hidden group-hover:flex items-center gap-0.5">
-                        @if (file.name.endsWith('.py')) {
+                      <span class="text-[10px] text-slate-500 tabular-nums group-hover:hidden">{{ node.size }}B</span>
+                      <div class="hidden group-hover:flex focus-within:flex items-center gap-0.5">
+                        @if (node.name.endsWith('.py')) {
                           <button
                             type="button"
-                            (click)="runSpecificFile($event, file.path)"
-                            title="Run {{ file.path }}"
+                            (click)="runSpecificFile($event, node.path)"
+                            title="Run {{ node.path }}"
                             class="p-0.5 rounded hover:bg-slate-700 text-emerald-400">
                             <mat-icon class="text-xs leading-none">play_arrow</mat-icon>
                           </button>
                         }
                         <button
                           type="button"
-                          (click)="deleteFile($event, file.path)"
-                          title="Delete {{ file.path }}"
+                          (click)="startRenamingItem($event, 'file', node.path, node.name)"
+                          title="Rename {{ node.path }} (F2)"
+                          class="p-0.5 rounded hover:bg-slate-700 text-slate-300 hover:text-sky-300">
+                          <mat-icon class="text-xs leading-none">edit</mat-icon>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="duplicateFile($event, node.path)"
+                          title="Duplicate {{ node.path }}"
+                          class="p-0.5 rounded hover:bg-slate-700 text-slate-300 hover:text-teal-300">
+                          <mat-icon class="text-xs leading-none">content_copy</mat-icon>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="requestDeleteFile($event, node.path)"
+                          title="Delete {{ node.path }}"
                           class="p-0.5 rounded hover:bg-slate-700 text-slate-400 hover:text-rose-400">
                           <mat-icon class="text-xs leading-none">delete</mat-icon>
                         </button>
@@ -832,7 +1355,27 @@ class GatewayNode(FirewallMixin, TelemetryMixin):
                     </div>
                   </div>
                 }
+              } @empty {
+                <div class="p-4 text-center text-slate-500 text-xs space-y-1">
+                  <mat-icon class="text-base text-slate-600">folder_off</mat-icon>
+                  <div>No matching files or folders found.</div>
+                </div>
+              }
+            </div>
+
+            <!-- LocalStorage Persistence Status Bar in Explorer -->
+            <div class="px-3 py-1.5 border-t border-slate-800/80 bg-black/25 flex items-center justify-between text-[10px] text-slate-400">
+              <div class="flex items-center gap-1 truncate">
+                <mat-icon class="text-xs leading-none text-emerald-400">cloud_done</mat-icon>
+                <span>localStorage Synced ({{ lastSavedAt() }})</span>
               </div>
+              <button
+                type="button"
+                (click)="startRenamingActiveFile()"
+                title="Rename currently active file (F2)"
+                class="text-teal-400 hover:underline font-mono shrink-0">
+                Rename File
+              </button>
             </div>
 
             <!-- Code Outline & Standard Input (stdin) Drawer -->
@@ -1594,12 +2137,31 @@ export class VscodeEditorComponent implements OnInit {
   readonly openTabs = signal<string[]>(['main.py', 'scanners/port_scanner.py', 'utils/crypto_vault.py']);
   readonly collapsedFolders = signal<string[]>([]);
   readonly selectedFolderTarget = signal<string>('');
+  readonly activeExplorerItemPath = signal<string>('main.py');
+  readonly explorerFilterQuery = signal<string>('');
+  readonly lastSavedAt = signal<string>('Just now');
 
   // File/Folder creation UI state
   readonly creationMode = signal<'file' | 'folder' | null>(null);
   readonly creationParentFolder = signal<string>('');
   readonly newItemName = signal<string>('');
   readonly creationError = signal<string>('');
+
+  // File/Folder inline rename UI state
+  readonly renamingTarget = signal<{ kind: 'file' | 'folder'; path: string; name: string } | null>(null);
+  readonly renameInputValue = signal<string>('');
+  readonly renameError = signal<string>('');
+
+  // Project inline rename UI state
+  readonly isRenamingProject = signal<boolean>(false);
+  readonly projectRenameInput = signal<string>('');
+
+  // File/Folder inline delete confirmation state
+  readonly pendingDeleteTarget = signal<{
+    kind: 'file' | 'folder';
+    path: string;
+    affectedFilesCount: number;
+  } | null>(null);
 
   // New Project Modal state
   readonly isNewProjectModalOpen = signal<boolean>(false);
@@ -1677,17 +2239,9 @@ export class VscodeEditorComponent implements OnInit {
     return Object.keys(this.activeProject().files).length;
   });
 
-  readonly editorLines = computed<number[]>(() => {
-    const content = this.activeFileContent();
-    const count = Math.max(1, content.split('\n').length);
-    return Array.from({ length: count }, (_, i) => i + 1);
-  });
-
-  readonly folderTree = computed<FolderNode[]>(() => {
+  readonly allProjectFolders = computed<string[]>(() => {
     const proj = this.activeProject();
     const folderSet = new Set<string>(proj.folders);
-
-    // Ensure any implicit folder from file paths is included
     for (const filePath of Object.keys(proj.files)) {
       const parts = filePath.split('/');
       if (parts.length > 1) {
@@ -1698,45 +2252,142 @@ export class VscodeEditorComponent implements OnInit {
         }
       }
     }
-
-    const sortedFolders = Array.from(folderSet).sort((a, b) => a.localeCompare(b));
-    return sortedFolders.map((folderPath) => {
-      const segments = folderPath.split('/');
-      const name = segments[segments.length - 1];
-      const depth = segments.length - 1;
-
-      const directFiles = Object.entries(proj.files)
-        .filter(([fPath]) => {
-          const lastSlash = fPath.lastIndexOf('/');
-          if (lastSlash === -1) return false;
-          return fPath.slice(0, lastSlash) === folderPath;
-        })
-        .map(([fPath, content]) => ({
-          path: fPath,
-          name: fPath.slice(fPath.lastIndexOf('/') + 1),
-          size: new TextEncoder().encode(content).length,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      return {
-        path: folderPath,
-        name,
-        depth,
-        files: directFiles,
-      };
-    });
+    return Array.from(folderSet).sort((a, b) => a.localeCompare(b));
   });
 
-  readonly rootFiles = computed<{ path: string; name: string; size: number }[]>(() => {
+  readonly totalProjectFoldersCount = computed<number>(() => {
+    return this.allProjectFolders().length;
+  });
+
+  readonly editorLines = computed<number[]>(() => {
+    const content = this.activeFileContent();
+    const count = Math.max(1, content.split('\n').length);
+    return Array.from({ length: count }, (_, i) => i + 1);
+  });
+
+  /**
+   * True recursive hierarchical tree flattened into visible display order:
+   * At each directory level (starting at Root ''), folders are ordered alphabetically first
+   * (along with their nested children when expanded), followed by files at that level.
+   */
+  readonly visibleExplorerNodes = computed<ExplorerTreeNode[]>(() => {
     const proj = this.activeProject();
-    return Object.entries(proj.files)
-      .filter(([fPath]) => !fPath.includes('/'))
-      .map(([fPath, content]) => ({
-        path: fPath,
-        name: fPath,
+    const allFolders = this.allProjectFolders();
+    const collapsed = this.collapsedFolders();
+    const filter = this.explorerFilterQuery().trim().toLowerCase();
+
+    const getParent = (p: string): string => {
+      const idx = p.lastIndexOf('/');
+      return idx === -1 ? '' : p.slice(0, idx);
+    };
+    const getName = (p: string): string => {
+      const idx = p.lastIndexOf('/');
+      return idx === -1 ? p : p.slice(idx + 1);
+    };
+
+    // Map parentPath -> direct child folder paths
+    const childFoldersByParent = new Map<string, string[]>();
+    for (const folderPath of allFolders) {
+      const parent = getParent(folderPath);
+      const list = childFoldersByParent.get(parent) || [];
+      list.push(folderPath);
+      childFoldersByParent.set(parent, list);
+    }
+    for (const list of childFoldersByParent.values()) {
+      list.sort((a, b) => getName(a).localeCompare(getName(b)));
+    }
+
+    // Map parentPath -> direct child file entries
+    const childFilesByParent = new Map<string, { path: string; name: string; size: number }[]>();
+    for (const [filePath, content] of Object.entries(proj.files)) {
+      const parent = getParent(filePath);
+      const list = childFilesByParent.get(parent) || [];
+      list.push({
+        path: filePath,
+        name: getName(filePath),
         size: new TextEncoder().encode(content).length,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      });
+      childFilesByParent.set(parent, list);
+    }
+    for (const list of childFilesByParent.values()) {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    // If a filter query is active, determine which folders/files match or have matching descendants
+    const visibleFolderFilterSet = new Set<string>();
+    if (filter) {
+      for (const folderPath of allFolders) {
+        if (folderPath.toLowerCase().includes(filter)) {
+          let curr = folderPath;
+          while (curr) {
+            visibleFolderFilterSet.add(curr);
+            curr = getParent(curr);
+          }
+        }
+      }
+      for (const filePath of Object.keys(proj.files)) {
+        if (filePath.toLowerCase().includes(filter)) {
+          let curr = getParent(filePath);
+          while (curr) {
+            visibleFolderFilterSet.add(curr);
+            curr = getParent(curr);
+          }
+        }
+      }
+    }
+
+    const result: ExplorerTreeNode[] = [];
+
+    const traverse = (parentPath: string, depth: number) => {
+      const subFolders = childFoldersByParent.get(parentPath) || [];
+      for (const folderPath of subFolders) {
+        if (filter && !visibleFolderFilterSet.has(folderPath)) {
+          continue;
+        }
+        const directSubFolders = childFoldersByParent.get(folderPath) || [];
+        const directFiles = childFilesByParent.get(folderPath) || [];
+        const isExpanded = filter ? true : !collapsed.includes(folderPath);
+
+        result.push({
+          kind: 'folder',
+          path: folderPath,
+          name: getName(folderPath),
+          parentPath,
+          depth,
+          size: 0,
+          childFoldersCount: directSubFolders.length,
+          childFilesCount: directFiles.length,
+          isExpanded,
+          isEntryFile: false,
+        });
+
+        if (isExpanded) {
+          traverse(folderPath, depth + 1);
+        }
+      }
+
+      const files = childFilesByParent.get(parentPath) || [];
+      for (const f of files) {
+        if (filter && !f.path.toLowerCase().includes(filter) && !parentPath.toLowerCase().includes(filter)) {
+          continue;
+        }
+        result.push({
+          kind: 'file',
+          path: f.path,
+          name: f.name,
+          parentPath,
+          depth,
+          size: f.size,
+          childFoldersCount: 0,
+          childFilesCount: 0,
+          isExpanded: false,
+          isEntryFile: proj.entryFile === f.path,
+        });
+      }
+    };
+
+    traverse('', 0);
+    return result;
   });
 
   readonly codeSymbols = computed<CodeSymbol[]>(() => {
@@ -1759,7 +2410,38 @@ export class VscodeEditorComponent implements OnInit {
 
   ngOnInit() {
     this.loadWorkspaceFromStorage();
+    this.handlePendingCoderFile();
     this.verifyLocalPythonPath();
+  }
+
+  private handlePendingCoderFile() {
+    const pending = this.state.pendingCoderFile();
+    if (!pending) return;
+    this.state.pendingCoderFile.set(null);
+
+    const lec2ProjId = 'lec2-functions-oop-pdf';
+    if (this.projects().some((p) => p.id === lec2ProjId)) {
+      this.switchProject(lec2ProjId);
+    }
+
+    if (pending.code) {
+      this.projects.update((projs) =>
+        projs.map((p) => {
+          if (p.id !== this.activeProjectId()) return p;
+          return {
+            ...p,
+            files: {
+              ...p.files,
+              [pending.fileName]: pending.code,
+            },
+          };
+        }),
+      );
+    }
+    if (this.activeProject().files[pending.fileName] !== undefined) {
+      this.openFile(pending.fileName);
+    }
+    this.saveWorkspaceToStorage();
   }
 
   exitToAcademy() {
@@ -1849,6 +2531,14 @@ export class VscodeEditorComponent implements OnInit {
     if (event.altKey && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       this.isPaletteModalOpen.update((v) => !v);
+      return;
+    }
+
+    // F2 -> Rename active file or selected folder in Explorer
+    if (event.key === 'F2') {
+      event.preventDefault();
+      this.isExplorerOpen.set(true);
+      this.startRenamingActiveFile();
     }
   }
 
@@ -2001,6 +2691,8 @@ export class VscodeEditorComponent implements OnInit {
   }
 
   startCreatingItem(mode: 'file' | 'folder', parentFolder = '') {
+    this.renamingTarget.set(null);
+    this.pendingDeleteTarget.set(null);
     this.creationMode.set(mode);
     this.creationParentFolder.set(parentFolder);
     this.newItemName.set('');
@@ -2010,8 +2702,9 @@ export class VscodeEditorComponent implements OnInit {
   startCreatingItemFromTree(event: MouseEvent, mode: 'file' | 'folder', folderPath: string) {
     event.stopPropagation();
     this.selectedFolderTarget.set(folderPath);
-    // Make sure folder is expanded
-    this.collapsedFolders.update((list) => list.filter((p) => p !== folderPath));
+    this.activeExplorerItemPath.set(folderPath);
+    // Ensure folder and its ancestors are expanded
+    this.expandFolderAndAncestors(folderPath);
     this.startCreatingItem(mode, folderPath);
   }
 
@@ -2039,25 +2732,47 @@ export class VscodeEditorComponent implements OnInit {
     const parent = this.creationParentFolder();
     const fullPath = parent ? `${parent}/${rawInput}` : rawInput;
 
+    // Extract any intermediate folders along fullPath
+    const extractFolderChain = (targetPath: string, includeLeaf: boolean): string[] => {
+      const parts = targetPath.split('/').filter(Boolean);
+      const limit = includeLeaf ? parts.length : parts.length - 1;
+      const chain: string[] = [];
+      let acc = '';
+      for (let i = 0; i < limit; i++) {
+        acc = acc ? `${acc}/${parts[i]}` : parts[i];
+        chain.push(acc);
+      }
+      return chain;
+    };
+
     if (mode === 'folder') {
+      const existingFolders = this.allProjectFolders();
+      if (existingFolders.includes(fullPath)) {
+        this.creationError.set(`Folder "${fullPath}" already exists.`);
+        return;
+      }
+      const foldersToEnsure = extractFolderChain(fullPath, true);
       this.projects.update((projs) =>
         projs.map((p) => {
           if (p.id !== this.activeProjectId()) return p;
-          if (p.folders.includes(fullPath)) return p;
           return {
             ...p,
-            folders: [...p.folders, fullPath],
+            folders: Array.from(new Set([...p.folders, ...foldersToEnsure])),
+            updatedAt: 'Just now',
           };
         }),
       );
+      this.expandFolderAndAncestors(fullPath);
       this.selectedFolderTarget.set(fullPath);
+      this.activeExplorerItemPath.set(fullPath);
       this.cancelCreateItem();
       this.saveWorkspaceToStorage();
       return;
     }
 
     // Creating a file
-    const finalFilePath = fullPath.includes('.') ? fullPath : `${fullPath}.py`;
+    const leafName = fullPath.split('/').pop() || fullPath;
+    const finalFilePath = leafName.includes('.') ? fullPath : `${fullPath}.py`;
     const proj = this.activeProject();
     if (proj.files[finalFilePath] !== undefined) {
       this.creationError.set(`File "${finalFilePath}" already exists.`);
@@ -2070,16 +2785,7 @@ export class VscodeEditorComponent implements OnInit {
         ? `{\n  "module": "${finalFilePath}"\n}\n`
         : `# ${finalFilePath}\n`;
 
-    // Extract any intermediate folders
-    const parts = finalFilePath.split('/');
-    const newFoldersToEnsure: string[] = [];
-    if (parts.length > 1) {
-      let acc = '';
-      for (let i = 0; i < parts.length - 1; i++) {
-        acc = acc ? `${acc}/${parts[i]}` : parts[i];
-        newFoldersToEnsure.push(acc);
-      }
-    }
+    const newFoldersToEnsure = extractFolderChain(finalFilePath, false);
 
     this.projects.update((projs) =>
       projs.map((p) => {
@@ -2092,20 +2798,63 @@ export class VscodeEditorComponent implements OnInit {
             ...p.files,
             [finalFilePath]: defaultContent,
           },
+          updatedAt: 'Just now',
         };
       }),
     );
 
+    if (newFoldersToEnsure.length > 0) {
+      this.expandFolderAndAncestors(newFoldersToEnsure[newFoldersToEnsure.length - 1]);
+    }
     this.openFile(finalFilePath);
     this.cancelCreateItem();
     this.saveWorkspaceToStorage();
   }
 
+  // ================= HIERARCHICAL TREE NAVIGATION & FILTERING =================
+
+  selectRootTarget() {
+    this.selectedFolderTarget.set('');
+    this.activeExplorerItemPath.set('');
+  }
+
+  onExplorerFilterInput(event: Event) {
+    this.explorerFilterQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  clearExplorerFilter() {
+    this.explorerFilterQuery.set('');
+  }
+
+  expandAllFolders() {
+    this.collapsedFolders.set([]);
+    this.saveWorkspaceToStorage();
+  }
+
+  collapseAllFolders() {
+    this.collapsedFolders.set([...this.allProjectFolders()]);
+    this.saveWorkspaceToStorage();
+  }
+
+  private expandFolderAndAncestors(folderPath: string) {
+    if (!folderPath) return;
+    const parts = folderPath.split('/');
+    const chain: string[] = [];
+    let acc = '';
+    for (const part of parts) {
+      acc = acc ? `${acc}/${part}` : part;
+      chain.push(acc);
+    }
+    this.collapsedFolders.update((list) => list.filter((p) => !chain.includes(p)));
+  }
+
   toggleFolderCollapse(folderPath: string) {
     this.selectedFolderTarget.set(folderPath);
+    this.activeExplorerItemPath.set(folderPath);
     this.collapsedFolders.update((list) =>
       list.includes(folderPath) ? list.filter((p) => p !== folderPath) : [...list, folderPath],
     );
+    this.saveWorkspaceToStorage();
   }
 
   isFolderCollapsed(folderPath: string): boolean {
@@ -2114,12 +2863,18 @@ export class VscodeEditorComponent implements OnInit {
 
   openFile(filePath: string) {
     this.activeFilePath.set(filePath);
+    this.activeExplorerItemPath.set(filePath);
     const lastSlash = filePath.lastIndexOf('/');
-    this.selectedFolderTarget.set(lastSlash > -1 ? filePath.slice(0, lastSlash) : '');
+    const parentFolder = lastSlash > -1 ? filePath.slice(0, lastSlash) : '';
+    this.selectedFolderTarget.set(parentFolder);
+    if (parentFolder) {
+      this.expandFolderAndAncestors(parentFolder);
+    }
     if (!this.openTabs().includes(filePath)) {
       this.openTabs.update((tabs) => [...tabs, filePath]);
     }
     this.errorLineNumber.set(null);
+    this.saveWorkspaceToStorage();
   }
 
   closeTab(event: MouseEvent, filePath: string) {
@@ -2129,24 +2884,350 @@ export class VscodeEditorComponent implements OnInit {
     if (this.activeFilePath() === filePath && updated.length > 0) {
       this.activeFilePath.set(updated[updated.length - 1]);
     }
+    this.saveWorkspaceToStorage();
+  }
+
+  // ================= INLINE RENAME FOR FILES, FOLDERS & PROJECTS =================
+
+  startRenamingProject() {
+    this.projectRenameInput.set(this.activeProject().name);
+    this.isRenamingProject.set(true);
+  }
+
+  onProjectRenameInput(event: Event) {
+    this.projectRenameInput.set((event.target as HTMLInputElement).value);
+  }
+
+  cancelRenameProject() {
+    this.isRenamingProject.set(false);
+  }
+
+  confirmRenameProject() {
+    const nextName = this.projectRenameInput().trim();
+    if (!nextName) {
+      this.isRenamingProject.set(false);
+      return;
+    }
+    this.projects.update((projs) =>
+      projs.map((p) => (p.id === this.activeProjectId() ? { ...p, name: nextName, updatedAt: 'Just now' } : p)),
+    );
+    this.isRenamingProject.set(false);
+    this.saveWorkspaceToStorage();
+  }
+
+  startRenamingItem(event: MouseEvent, kind: 'file' | 'folder', path: string, name: string) {
+    event.stopPropagation();
+    this.creationMode.set(null);
+    this.pendingDeleteTarget.set(null);
+    this.renamingTarget.set({ kind, path, name });
+    this.renameInputValue.set(name);
+    this.renameError.set('');
+  }
+
+  startRenamingFromKeyboard(event: Event, kind: 'file' | 'folder', path: string, name: string) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.creationMode.set(null);
+    this.pendingDeleteTarget.set(null);
+    this.renamingTarget.set({ kind, path, name });
+    this.renameInputValue.set(name);
+    this.renameError.set('');
+  }
+
+  startRenamingActiveFile() {
+    const active = this.activeFilePath();
+    if (!active) return;
+    this.creationMode.set(null);
+    this.pendingDeleteTarget.set(null);
+    const name = this.getFileName(active);
+    this.renamingTarget.set({ kind: 'file', path: active, name });
+    this.renameInputValue.set(name);
+    this.renameError.set('');
+  }
+
+  onRenameInput(event: Event) {
+    this.renameInputValue.set((event.target as HTMLInputElement).value);
+    this.renameError.set('');
+  }
+
+  cancelRenameItem() {
+    this.renamingTarget.set(null);
+    this.renameInputValue.set('');
+    this.renameError.set('');
+  }
+
+  confirmRenameItem() {
+    const target = this.renamingTarget();
+    if (!target) return;
+
+    const rawInput = this.renameInputValue().trim().replace(/^\/+|\/+$/g, '');
+    if (!rawInput) {
+      this.renameError.set('Name cannot be empty.');
+      return;
+    }
+
+    const oldPath = target.path;
+    const lastSlash = oldPath.lastIndexOf('/');
+    const parentPath = lastSlash === -1 ? '' : oldPath.slice(0, lastSlash);
+
+    // If user typed a relative path with '/', use it directly; otherwise keep within parentPath
+    const newPath = rawInput.includes('/')
+      ? rawInput
+      : parentPath
+        ? `${parentPath}/${rawInput}`
+        : rawInput;
+
+    if (newPath === oldPath) {
+      this.cancelRenameItem();
+      return;
+    }
+
+    const proj = this.activeProject();
+
+    // Ensure intermediate parent folders of newPath exist
+    const ensureParentFolders = (pathStr: string): string[] => {
+      const parts = pathStr.split('/').filter(Boolean);
+      const chain: string[] = [];
+      let acc = '';
+      for (let i = 0; i < parts.length - 1; i++) {
+        acc = acc ? `${acc}/${parts[i]}` : parts[i];
+        chain.push(acc);
+      }
+      return chain;
+    };
+
+    if (target.kind === 'file') {
+      if (proj.files[newPath] !== undefined) {
+        this.renameError.set(`File "${newPath}" already exists.`);
+        return;
+      }
+
+      const parentChain = ensureParentFolders(newPath);
+      this.projects.update((projs) =>
+        projs.map((p) => {
+          if (p.id !== this.activeProjectId()) return p;
+          const nextFiles: Record<string, string> = {};
+          for (const [k, v] of Object.entries(p.files)) {
+            if (k === oldPath) {
+              nextFiles[newPath] = v;
+            } else {
+              nextFiles[k] = v;
+            }
+          }
+          const nextFolders = Array.from(new Set([...p.folders, ...parentChain]));
+          const nextEntry = p.entryFile === oldPath ? newPath : p.entryFile;
+          return {
+            ...p,
+            folders: nextFolders,
+            files: nextFiles,
+            entryFile: nextEntry,
+            updatedAt: 'Just now',
+          };
+        }),
+      );
+
+      if (this.activeFilePath() === oldPath) {
+        this.activeFilePath.set(newPath);
+      }
+      if (this.activeExplorerItemPath() === oldPath) {
+        this.activeExplorerItemPath.set(newPath);
+      }
+      this.openTabs.update((tabs) => tabs.map((t) => (t === oldPath ? newPath : t)));
+      this.cancelRenameItem();
+      this.saveWorkspaceToStorage();
+      return;
+    }
+
+    // Renaming a folder (updates folder, nested subfolders, and all nested files)
+    if (newPath.startsWith(oldPath + '/')) {
+      this.renameError.set('Cannot move a folder inside itself.');
+      return;
+    }
+
+    const existingFolders = this.allProjectFolders();
+    if (existingFolders.includes(newPath)) {
+      this.renameError.set(`Folder "${newPath}" already exists.`);
+      return;
+    }
+
+    const parentChain = ensureParentFolders(newPath);
+    const oldPrefix = oldPath + '/';
+    const newPrefix = newPath + '/';
+
+    this.projects.update((projs) =>
+      projs.map((p) => {
+        if (p.id !== this.activeProjectId()) return p;
+
+        const updatedFolders = p.folders.map((f) => {
+          if (f === oldPath) return newPath;
+          if (f.startsWith(oldPrefix)) return newPrefix + f.slice(oldPrefix.length);
+          return f;
+        });
+        if (!updatedFolders.includes(newPath)) {
+          updatedFolders.push(newPath);
+        }
+
+        const nextFolders = Array.from(new Set([...updatedFolders, ...parentChain]));
+        const nextFiles: Record<string, string> = {};
+        for (const [k, v] of Object.entries(p.files)) {
+          if (k.startsWith(oldPrefix)) {
+            const movedKey = newPrefix + k.slice(oldPrefix.length);
+            nextFiles[movedKey] = v;
+          } else {
+            nextFiles[k] = v;
+          }
+        }
+
+        const nextEntry = p.entryFile.startsWith(oldPrefix)
+          ? newPrefix + p.entryFile.slice(oldPrefix.length)
+          : p.entryFile;
+
+        return {
+          ...p,
+          folders: nextFolders,
+          files: nextFiles,
+          entryFile: nextEntry,
+          updatedAt: 'Just now',
+        };
+      }),
+    );
+
+    if (this.activeFilePath().startsWith(oldPrefix)) {
+      this.activeFilePath.set(newPrefix + this.activeFilePath().slice(oldPrefix.length));
+    }
+    this.openTabs.update((tabs) =>
+      tabs.map((t) => (t.startsWith(oldPrefix) ? newPrefix + t.slice(oldPrefix.length) : t)),
+    );
+    this.collapsedFolders.update((list) =>
+      list.map((f) => {
+        if (f === oldPath) return newPath;
+        if (f.startsWith(oldPrefix)) return newPrefix + f.slice(oldPrefix.length);
+        return f;
+      }),
+    );
+    if (this.selectedFolderTarget() === oldPath) {
+      this.selectedFolderTarget.set(newPath);
+    } else if (this.selectedFolderTarget().startsWith(oldPrefix)) {
+      this.selectedFolderTarget.set(newPrefix + this.selectedFolderTarget().slice(oldPrefix.length));
+    }
+
+    this.cancelRenameItem();
+    this.saveWorkspaceToStorage();
+  }
+
+  duplicateFile(event: MouseEvent, filePath: string) {
+    event.stopPropagation();
+    const proj = this.activeProject();
+    const content = proj.files[filePath];
+    if (content === undefined) return;
+
+    const dotIdx = filePath.lastIndexOf('.');
+    const base = dotIdx > -1 ? filePath.slice(0, dotIdx) : filePath;
+    const ext = dotIdx > -1 ? filePath.slice(dotIdx) : '.py';
+
+    let copyPath = `${base}_copy${ext}`;
+    let counter = 2;
+    while (proj.files[copyPath] !== undefined) {
+      copyPath = `${base}_copy${counter}${ext}`;
+      counter++;
+    }
+
+    this.projects.update((projs) =>
+      projs.map((p) => {
+        if (p.id !== this.activeProjectId()) return p;
+        return {
+          ...p,
+          files: {
+            ...p.files,
+            [copyPath]: content,
+          },
+          updatedAt: 'Just now',
+        };
+      }),
+    );
+    this.openFile(copyPath);
+    this.saveWorkspaceToStorage();
+  }
+
+  // ================= DELETE FILE & FOLDER HANDLERS =================
+
+  requestDeleteFile(event: MouseEvent, filePath: string) {
+    event.stopPropagation();
+    this.creationMode.set(null);
+    this.renamingTarget.set(null);
+    this.pendingDeleteTarget.set({
+      kind: 'file',
+      path: filePath,
+      affectedFilesCount: 1,
+    });
+  }
+
+  requestDeleteFolder(event: MouseEvent, folderPath: string) {
+    event.stopPropagation();
+    this.creationMode.set(null);
+    this.renamingTarget.set(null);
+    const prefix = folderPath + '/';
+    const affectedFilesCount = Object.keys(this.activeProject().files).filter((k) =>
+      k.startsWith(prefix),
+    ).length;
+    this.pendingDeleteTarget.set({
+      kind: 'folder',
+      path: folderPath,
+      affectedFilesCount,
+    });
+  }
+
+  cancelDeleteItem() {
+    this.pendingDeleteTarget.set(null);
+  }
+
+  confirmDeleteItem() {
+    const target = this.pendingDeleteTarget();
+    if (!target) return;
+    if (target.kind === 'file') {
+      this.executeDeleteFile(target.path);
+    } else {
+      this.executeDeleteFolder(target.path);
+    }
+    this.pendingDeleteTarget.set(null);
   }
 
   deleteFile(event: MouseEvent, filePath: string) {
     event.stopPropagation();
-    const proj = this.activeProject();
-    if (Object.keys(proj.files).length <= 1) return;
+    this.executeDeleteFile(filePath);
+  }
+
+  private executeDeleteFile(filePath: string) {
+    // Preserve folder existence if this file was the only implicit child of its parent folder
+    const lastSlash = filePath.lastIndexOf('/');
+    const parentFolder = lastSlash > -1 ? filePath.slice(0, lastSlash) : '';
 
     this.projects.update((projs) =>
       projs.map((p) => {
         if (p.id !== this.activeProjectId()) return p;
         const nextFiles = { ...p.files };
         delete nextFiles[filePath];
-        return { ...p, files: nextFiles };
+        if (Object.keys(nextFiles).length === 0) {
+          nextFiles['main.py'] = '# Main entry script\nprint("Ready")\n';
+        }
+        const nextFolders =
+          parentFolder && !p.folders.includes(parentFolder)
+            ? [...p.folders, parentFolder]
+            : p.folders;
+        const nextEntry =
+          p.entryFile === filePath ? Object.keys(nextFiles)[0] : p.entryFile;
+        return {
+          ...p,
+          folders: nextFolders,
+          files: nextFiles,
+          entryFile: nextEntry,
+          updatedAt: 'Just now',
+        };
       }),
     );
 
-    const nextTabs = this.openTabs().filter((t) => t !== filePath);
     const remainingFiles = Object.keys(this.activeProject().files);
+    const nextTabs = this.openTabs().filter((t) => t !== filePath && remainingFiles.includes(t));
     this.openTabs.set(nextTabs.length > 0 ? nextTabs : [remainingFiles[0]]);
     if (this.activeFilePath() === filePath) {
       this.activeFilePath.set(this.openTabs()[0]);
@@ -2156,25 +3237,35 @@ export class VscodeEditorComponent implements OnInit {
 
   deleteFolder(event: MouseEvent, folderPath: string) {
     event.stopPropagation();
+    this.executeDeleteFolder(folderPath);
+  }
+
+  private executeDeleteFolder(folderPath: string) {
+    const prefix = folderPath + '/';
     this.projects.update((projs) =>
       projs.map((p) => {
         if (p.id !== this.activeProjectId()) return p;
         const nextFolders = p.folders.filter(
-          (f) => f !== folderPath && !f.startsWith(folderPath + '/'),
+          (f) => f !== folderPath && !f.startsWith(prefix),
         );
         const nextFiles: Record<string, string> = {};
         for (const [k, v] of Object.entries(p.files)) {
-          if (!k.startsWith(folderPath + '/')) {
+          if (!k.startsWith(prefix)) {
             nextFiles[k] = v;
           }
         }
         if (Object.keys(nextFiles).length === 0) {
           nextFiles['main.py'] = '# Main entry script\nprint("Ready")\n';
         }
+        const nextEntry = nextFiles[p.entryFile] !== undefined
+          ? p.entryFile
+          : Object.keys(nextFiles)[0];
         return {
           ...p,
           folders: nextFolders,
           files: nextFiles,
+          entryFile: nextEntry,
+          updatedAt: 'Just now',
         };
       }),
     );
@@ -2186,7 +3277,13 @@ export class VscodeEditorComponent implements OnInit {
       const filtered = tabs.filter((t) => validFiles.includes(t));
       return filtered.length > 0 ? filtered : [validFiles[0]];
     });
-    if (this.selectedFolderTarget() === folderPath) {
+    this.collapsedFolders.update((list) =>
+      list.filter((f) => f !== folderPath && !f.startsWith(prefix)),
+    );
+    if (
+      this.selectedFolderTarget() === folderPath ||
+      this.selectedFolderTarget().startsWith(prefix)
+    ) {
       this.selectedFolderTarget.set('');
     }
     this.saveWorkspaceToStorage();
@@ -2614,11 +3711,17 @@ if __name__ == "__main__":
   private saveWorkspaceToStorage() {
     if (typeof window === 'undefined') return;
     try {
+      const now = new Date();
+      const ts = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      this.lastSavedAt.set(ts);
       localStorage.setItem(
         'pyadvance_coder_workspace_v1',
         JSON.stringify({
           projects: this.projects(),
           activeProjectId: this.activeProjectId(),
+          activeFilePath: this.activeFilePath(),
+          openTabs: this.openTabs(),
+          collapsedFolders: this.collapsedFolders(),
           localPythonPath: this.localPythonPath(),
           activePaletteId: this.activePaletteId(),
         }),
@@ -2635,10 +3738,27 @@ if __name__ == "__main__":
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed.projects) && parsed.projects.length > 0) {
-        this.projects.set(parsed.projects);
+        // Ensure any newly added default projects (such as lec2-functions-oop-pdf) are merged in
+        const savedIds = new Set(parsed.projects.map((p: IdeProject) => p.id));
+        const missingDefaults = DEFAULT_PROJECTS.filter((dp) => !savedIds.has(dp.id));
+        this.projects.set([...missingDefaults, ...parsed.projects]);
       }
       if (parsed.activeProjectId) {
         this.activeProjectId.set(parsed.activeProjectId);
+      }
+      const currentProj = this.activeProject();
+      if (parsed.activeFilePath && currentProj.files[parsed.activeFilePath] !== undefined) {
+        this.activeFilePath.set(parsed.activeFilePath);
+      } else {
+        const firstKey = Object.keys(currentProj.files)[0] || 'main.py';
+        this.activeFilePath.set(firstKey);
+      }
+      if (Array.isArray(parsed.openTabs)) {
+        const validTabs = parsed.openTabs.filter((t: string) => currentProj.files[t] !== undefined);
+        this.openTabs.set(validTabs.length > 0 ? validTabs : [this.activeFilePath()]);
+      }
+      if (Array.isArray(parsed.collapsedFolders)) {
+        this.collapsedFolders.set(parsed.collapsedFolders);
       }
       if (parsed.localPythonPath) {
         this.localPythonPath.set(parsed.localPythonPath);
@@ -2651,3 +3771,5 @@ if __name__ == "__main__":
     }
   }
 }
+
+export { VscodeEditorComponent as EditorComponent };

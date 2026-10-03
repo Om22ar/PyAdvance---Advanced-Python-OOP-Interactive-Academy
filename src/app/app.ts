@@ -9,6 +9,7 @@ import { PlaygroundComponent } from './components/playground/playground';
 import { SimulatorsComponent } from './components/simulators/simulators';
 import { SurgeHubComponent } from './components/surge-hub/surge-hub';
 import { VscodeEditorComponent } from './components/vscode-editor/vscode-editor';
+import { StudyReaderComponent } from './components/study-reader/study-reader';
 import { LearningStateService } from './services/learning-state.service';
 
 @Component({
@@ -25,6 +26,7 @@ import { LearningStateService } from './services/learning-state.service';
     SimulatorsComponent,
     SurgeHubComponent,
     VscodeEditorComponent,
+    StudyReaderComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
